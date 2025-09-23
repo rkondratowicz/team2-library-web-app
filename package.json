@@ -1,0 +1,24 @@
+{
+  "name": "team2-library-web-app",
+  "version": "1.0.0",
+  "description": "A basic Express TypeScript app using ES modules",
+  "type": "module",
+  "main": "dist/app.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/app.js",
+    "dev": "npm run build && npm start",
+    "clean": "rm -rf dist"
+  },
+  "keywords": ["express", "typescript", "es-modules"],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "express": "^4.18.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.17",
+    "@types/node": "^20.8.0",
+    "typescript": "^5.2.0"
+  }
+}
