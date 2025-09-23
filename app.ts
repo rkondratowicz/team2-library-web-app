@@ -1,24 +1,62 @@
 import express from 'express';
+import { databaseService } from './database.js';
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 
+// Serve static files from public directory
+app.use(express.static(path.join(__dirname, '..', 'public')));
+
 app.get('/', (req, res) => {
-  res.json({ message: 'Hello World!' });
+  res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-app.get('/api/books', (req, res) => {
-  const books = [
-    { id: 1, title: 'The Great Gatsby', author: 'F. Scott Fitzgerald' },
-    { id: 2, title: 'To Kill a Mockingbird', author: 'Harper Lee' },
-    { id: 3, title: '1984', author: 'George Orwell' },
-    { id: 4, title: 'Harry Potter', author: 'J.K. Rowling' }
-  ];
-  res.json(books);
+app.get('/api/books', async (req, res) => {
+  try {
+    const books = await databaseService.getAllBooks();
+    res.json(books);
+  } catch (error) {
+    console.error('Error fetching books:', error);
+    res.status(500).json({ error: 'Failed to fetch books' });
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
+app.get('/api/books/:id', async (req, res) => {
+  try {
+    const book = await databaseService.getBookById(req.params.id);
+    if (book) {
+      res.json(book);
+    } else {
+      res.status(404).json({ error: 'Book not found' });
+    }
+  } catch (error) {
+    console.error('Error fetching book:', error);
+    res.status(500).json({ error: 'Failed to fetch book' });
+  }
 });
+
+// Initialize database and start server
+async function startServer() {
+  try {
+    await databaseService.connect();
+    await databaseService.runMigrations();
+    await databaseService.populateSampleData();
+    
+    app.listen(PORT, () => {
+      console.log(`Server running on http://localhost:${PORT}`);
+      console.log(`Books API available at http://localhost:${PORT}/api/books`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
