@@ -36,10 +36,6 @@ PORT=3000
 DATABASE_URL=postgresql://username:password@localhost:5432/library_db
 ```
 
-4. Run database migrations:
-```bash
-npm run migrate
-```
 
 ## Development
 
@@ -52,27 +48,19 @@ Build the project:
 ```bash
 npm run build
 ```
+## DummyData
 
-## API Endpoints
-
-### Books
-- `GET /api/books` - Get all books
-- `GET /api/books/:id` - Get a specific book
-- `POST /api/books` - Add a new book
-- `PUT /api/books/:id` - Update a book
-- `DELETE /api/books/:id` - Delete a book
-
-### Users
-- `GET /api/users` - Get all users
-- `GET /api/users/:id` - Get a specific user
-- `POST /api/users` - Add a new user
-- `PUT /api/users/:id` - Update a user
-
-### Loans
-- `GET /api/loans` - Get all loans
-- `POST /api/loans` - Create a new loan
-- `PUT /api/loans/:id/return` - Return a book
-- `GET /api/loans/user/:userId` - Get user's loans
+```sql
+INSERT INTO books (title, author) VALUES
+('1984', 'George Orwell'),
+('To Kill a Mockingbird', 'Harper Lee'),
+('The Great Gatsby', 'F. Scott Fitzgerald'),
+('Pride and Prejudice', 'Jane Austen'),
+('The Catcher in the Rye', 'J.D. Salinger'),
+('One Hundred Years of Solitude', 'Gabriel García Márquez'),
+('Brave New World', 'Aldous Huxley'),
+('The Lord of the Rings', 'J.R.R. Tolkien');
+```
 
 ## Project Structure
 
@@ -88,13 +76,6 @@ team2-library-web-app/
 ├── migrations/         # Database migrations
 ├── tests/             # Test files
 └── tsconfig.json      # TypeScript configuration
-```
-
-## Testing
-
-Run the test suite:
-```bash
-npm test
 ```
 
 ## Contributing
