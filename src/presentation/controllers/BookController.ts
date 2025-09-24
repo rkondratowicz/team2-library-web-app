@@ -25,6 +25,17 @@ export class BookController {
       res.status(500).json({ error: 'Failed to fetch book' });
     }
   }
+
+  async searchBooks(req: Request, res: Response): Promise<void> {
+    try {
+      const searchTerm = req.query.q as string || '';
+      const books = await bookService.searchBooks(searchTerm);
+      res.json(books);
+    } catch (error) {
+      console.error('Error searching books:', error);
+      res.status(500).json({ error: 'Failed to search books' });
+    }
+  }
 }
 
 export const bookController = new BookController();

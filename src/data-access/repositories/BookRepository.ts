@@ -16,6 +16,16 @@ export class BookRepository {
     );
     return (row as Book) || null;
   }
+
+  async searchBooks(searchTerm: string): Promise<Book[]> {
+    const rows = await databaseConnection.all(
+      `SELECT * FROM books 
+       WHERE title LIKE ? OR author LIKE ? OR isbn LIKE ? OR genre LIKE ? OR CAST(publication_year as TEXT) LIKE ?
+       ORDER BY created_at DESC`,
+      [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]
+    );
+    return rows as Book[];
+  }
 }
 
 export const bookRepository = new BookRepository();
