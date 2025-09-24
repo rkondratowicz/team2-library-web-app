@@ -38,8 +38,9 @@
 
                 <!-- Books Table -->
                 <div class="card books-table-card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">📖 Books Collection</h5>
+                        <input type="text" class="form-control" id="search-books" placeholder="Search books..." style="max-width: 250px;">
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -123,6 +124,20 @@
             return div.innerHTML;
         }
         
+        // Simple search functionality
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('search-books').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.toLowerCase();
+                const rows = document.querySelectorAll('#books-tbody tr');
+                
+                rows.forEach(row => {
+                    const title = row.cells[1]?.textContent.toLowerCase() || '';
+                    const author = row.cells[2]?.textContent.toLowerCase() || '';
+                    row.style.display = (title.includes(searchTerm) || author.includes(searchTerm)) ? '' : 'none';
+                });
+            });
+        });
+
         // Load books when page loads
         document.addEventListener('DOMContentLoaded', loadBooks);
         
