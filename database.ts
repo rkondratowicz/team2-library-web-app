@@ -14,6 +14,11 @@ export interface Book {
   created_at?: string;
 }
 
+interface QueryResult {
+  count: number;
+  [key: string]: unknown;
+}
+
 class DatabaseService {
   private db: sqlite3.Database | null = null;
   private dbPath: string;
@@ -37,20 +42,21 @@ class DatabaseService {
 
   async runMigrations(): Promise<void> {
     const migrationsDir = path.join(__dirname, '..', 'migrations');
-    
+
     if (!fs.existsSync(migrationsDir)) {
       console.log('No migrations directory found');
       return;
     }
 
-    const migrationFiles = fs.readdirSync(migrationsDir)
-      .filter(file => file.endsWith('.sql'))
+    const migrationFiles = fs
+      .readdirSync(migrationsDir)
+      .filter((file) => file.endsWith('.sql'))
       .sort();
 
     for (const file of migrationFiles) {
       const migrationPath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(migrationPath, 'utf-8');
-      
+
       await this.run(sql);
       console.log(`Executed migration: ${file}`);
     }
@@ -59,7 +65,7 @@ class DatabaseService {
   async populateSampleData(): Promise<void> {
     const scriptsDir = path.join(__dirname, '..', 'scripts');
     const populateScript = path.join(scriptsDir, 'populate-sample-books.sql');
-    
+
     if (fs.existsSync(populateScript)) {
       // Check if data already exists
       const count = await this.get('SELECT COUNT(*) as count FROM books');
@@ -80,13 +86,16 @@ class DatabaseService {
         return;
       }
 
-      this.db.all('SELECT * FROM books ORDER BY created_at DESC', (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows as Book[]);
+      this.db.all(
+        'SELECT * FROM books ORDER BY created_at DESC',
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows as Book[]);
+          }
         }
-      });
+      );
     });
   }
 
@@ -101,7 +110,7 @@ class DatabaseService {
         if (err) {
           reject(err);
         } else {
-          resolve(row as Book || null);
+          resolve((row as Book) || null);
         }
       });
     });
@@ -124,7 +133,7 @@ class DatabaseService {
     });
   }
 
-  private async get(sql: string): Promise<any> {
+  private async get(sql: string): Promise<QueryResult> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
@@ -135,7 +144,7 @@ class DatabaseService {
         if (err) {
           reject(err);
         } else {
-          resolve(row);
+          resolve(row as QueryResult);
         }
       });
     });

@@ -14,7 +14,6 @@ A web-based library management system built with Express.js and TypeScript, desi
 
 - Node.js (v14 or higher)
 - npm or yarn
-- PostgreSQL database
 
 ## Installation
 
@@ -33,8 +32,9 @@ npm install
 Create a `.env` file in the root directory and add:
 ```
 PORT=3000
-DATABASE_URL=postgresql://username:password@localhost:5432/library_db
 ```
+
+The application uses SQLite for data storage, which doesn't require additional setup.
 
 
 ## Development
@@ -48,6 +48,32 @@ Build the project:
 ```bash
 npm run build
 ```
+
+## Code Quality and Formatting
+
+This project uses [Biome](https://biomejs.dev/) for code formatting and linting. Biome is a high-performance formatter, linter, and toolchain for JavaScript, TypeScript, and JSON.
+
+Available commands:
+
+```bash
+# Format all files
+npm run format
+
+# Run linting checks
+npm run lint
+
+# Run both format and lint checks with auto-fix
+npm run check
+```
+
+### Biome Configuration
+
+The project includes a `biome.json` configuration file with:
+- TypeScript support
+- Automatic import organization
+- Code style rules (2 spaces, single quotes)
+- Recommended linting rules
+- Maximum line width of 80 characters
 ## DummyData
 
 ```sql
@@ -66,16 +92,14 @@ INSERT INTO books (title, author) VALUES
 
 ```
 team2-library-web-app/
-├── src/
-│   ├── controllers/    # Route controllers
-│   ├── models/         # Database models
-│   ├── routes/         # API routes
-│   ├── middleware/     # Custom middleware
-│   ├── utils/          # Utility functions
-│   └── app.ts          # Application entry point
-├── migrations/         # Database migrations
-├── tests/             # Test files
-└── tsconfig.json      # TypeScript configuration
+├── app.ts             # Application entry point
+├── database.ts        # Database service
+├── migrations/        # Database migrations
+├── scripts/          # Database scripts
+├── public/           # Static files
+├── biome.json        # Biome configuration
+├── tsconfig.json     # TypeScript configuration
+└── .gitignore        # Git ignore rules
 ```
 
 ## Contributing
