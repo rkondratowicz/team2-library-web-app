@@ -1,7 +1,7 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { databaseService } from './database.js';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -14,11 +14,11 @@ app.use(express.json());
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 
-app.get('/api/books', async (req, res) => {
+app.get('/api/books', async (_req, res) => {
   try {
     const books = await databaseService.getAllBooks();
     res.json(books);
