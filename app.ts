@@ -48,7 +48,7 @@ async function startServer() {
     await databaseService.connect();
     await databaseService.runMigrations();
     await databaseService.populateSampleData();
-    
+
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
       console.log(`Books API available at http://localhost:${PORT}/api/books`);
