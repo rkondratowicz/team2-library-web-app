@@ -2,181 +2,189 @@
 
 /* Global styles */
 body {
-    background-color: #f8f9fa;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f8f9fa;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
 }
 
 /* Header customizations */
 .library-header {
-    background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .library-header h1 {
-    font-weight: 300;
-    letter-spacing: 1px;
+  font-weight: 300;
+  letter-spacing: 1px;
 }
 
 /* Stats card enhancements */
 .stats-card {
-    border: none;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 
 .stats-card:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.12);
 }
 
 .stats-badge {
-    font-size: 1.1em;
-    padding: 0.5em 1em;
+  font-size: 1.1em;
+  padding: 0.5em 1em;
 }
 
 /* Table enhancements */
 .books-table-card {
-    border: none;
-    box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
-    overflow: hidden;
+  border: none;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
 }
 
 .books-table-card .card-header {
-    background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
-    color: white;
-    border-bottom: none;
-    font-weight: 500;
+  background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+  color: white;
+  border-bottom: none;
+  font-weight: 500;
 }
 
 /* Custom table styling */
 .books-table {
-    margin-bottom: 0;
+  margin-bottom: 0;
 }
 
 .books-table thead th {
-    border-top: none;
-    font-weight: 600;
-    letter-spacing: 0.5px;
-    font-size: 0.9em;
-    text-transform: uppercase;
+  border-top: none;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  font-size: 0.9em;
+  text-transform: uppercase;
 }
 
 .books-table tbody tr {
-    transition: background-color 0.2s ease;
+  transition: background-color 0.2s ease;
 }
 
 .books-table tbody tr:hover {
-    background-color: rgba(52, 152, 219, 0.08) !important;
+  background-color: rgba(52, 152, 219, 0.08) !important;
 }
 
 .book-id {
-    font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
-    font-size: 0.85em;
-    background-color: rgba(108, 117, 125, 0.1);
-    padding: 0.25em 0.5em;
-    border-radius: 0.25rem;
-    color: #495057;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+  font-size: 0.85em;
+  background-color: rgba(108, 117, 125, 0.1);
+  padding: 0.25em 0.5em;
+  border-radius: 0.25rem;
+  color: #495057;
 }
 
 .book-title {
-    color: #2c3e50;
-    font-weight: 600;
+  color: #2c3e50;
+  font-weight: 600;
 }
 
 .book-author {
-    color: #6c757d;
-    font-style: italic;
+  color: #6c757d;
+  font-style: italic;
 }
 
 /* Loading spinner customization */
 .loading-container {
-    padding: 3rem 0;
+  padding: 3rem 0;
 }
 
 .loading-text {
-    color: #6c757d;
-    font-weight: 500;
+  color: #6c757d;
+  font-weight: 500;
 }
 
 /* Error alert customization */
 .error-alert {
-    border: none;
-    box-shadow: 0 2px 10px rgba(220, 53, 69, 0.2);
+  border: none;
+  box-shadow: 0 2px 10px rgba(220, 53, 69, 0.2);
 }
 
 /* Empty state styling */
 .empty-state {
-    padding: 3rem 1rem;
-    color: #6c757d;
+  padding: 3rem 1rem;
+  color: #6c757d;
 }
 
 .empty-state-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
-    opacity: 0.5;
+  font-size: 3rem;
+  margin-bottom: 1rem;
+  opacity: 0.5;
 }
 
 /* Responsive improvements */
 @media (max-width: 768px) {
-    .library-header h1 {
-        font-size: 2rem;
-    }
-    
-    .library-header .lead {
-        font-size: 1rem;
-    }
-    
-    .stats-card .card-body {
-        padding: 1rem;
-    }
-    
-    .books-table-card .card-header h5 {
-        font-size: 1rem;
-    }
+  .library-header h1 {
+    font-size: 2rem;
+  }
+
+  .library-header .lead {
+    font-size: 1rem;
+  }
+
+  .stats-card .card-body {
+    padding: 1rem;
+  }
+
+  .books-table-card .card-header h5 {
+    font-size: 1rem;
+  }
 }
 
 /* Animation for book count badge */
 @keyframes countUpdate {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+  100% {
+    transform: scale(1);
+  }
 }
 
 .count-animate {
-    animation: countUpdate 0.3s ease;
+  animation: countUpdate 0.3s ease;
 }
 
 /* Fade in animation for table rows */
 @keyframes fadeInUp {
-    from {
-        opacity: 0;
-        transform: translateY(10px);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 .book-row {
-    animation: fadeInUp 0.3s ease;
+  animation: fadeInUp 0.3s ease;
 }
 
 /* Custom scrollbar for table */
 .table-responsive::-webkit-scrollbar {
-    height: 8px;
+  height: 8px;
 }
 
 .table-responsive::-webkit-scrollbar-track {
-    background: #f1f1f1;
-    border-radius: 4px;
+  background: #f1f1f1;
+  border-radius: 4px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
-    background: #c1c1c1;
-    border-radius: 4px;
+  background: #c1c1c1;
+  border-radius: 4px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
-    background: #a8a8a8;
+  background: #a8a8a8;
 }
