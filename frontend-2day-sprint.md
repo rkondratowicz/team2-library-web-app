@@ -178,20 +178,4 @@ POST /api/borrows - Checkout book
 PUT /api/borrows/:id/return - Return book
 GET /api/dashboard/stats - Basic counts
 ```
-
-### **Data Structures Needed**:
-```javascript
-// Book
-{ id, title, author, available: boolean }
-
-// Member  
-{ id, name, currentBorrows: number }
-
-// Borrow
-{ id, memberId, bookId, borrowDate, returned: boolean }
-
-// Stats
-{ totalBooks, totalMembers, activeBorrows }
-```
-
 This focused approach ensures we have a working library system in 2 days with all core functionality operational!
