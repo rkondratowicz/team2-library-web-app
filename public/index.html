@@ -50,6 +50,9 @@
                                         <th scope="col">ID</th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(1)">Title <span id="title-sort">↕️</span></th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(2)">Author <span id="author-sort">↕️</span></th>
+                                        <th scope="col">ISBN</th>
+                                        <th scope="col" style="cursor: pointer;" onclick="sortTable(4)">Genre <span id="genre-sort">↕️</span></th>
+                                        <th scope="col" style="cursor: pointer;" onclick="sortTable(5)">Year <span id="year-sort">↕️</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="books-tbody">
@@ -88,7 +91,7 @@
                 if (books.length === 0) {
                     tbody.innerHTML = `
                         <tr>
-                            <td colspan="3" class="text-center empty-state">
+                            <td colspan="6" class="text-center empty-state">
                                 <div class="empty-state-icon">📚</div>
                                 <em>No books found in the library.</em>
                             </td>
@@ -100,11 +103,13 @@
                 books.forEach((book, index) => {
                     const row = document.createElement('tr');
                     row.className = 'book-row';
-                    row.style.animationDelay = `${index * 0.05}s`;
                     row.innerHTML = `
                         <td><span class="book-id">${book.id}</span></td>
                         <td class="book-title">${escapeHtml(book.title)}</td>
                         <td class="book-author">${escapeHtml(book.author)}</td>
+                        <td class="book-isbn">${book.isbn || 'N/A'}</td>
+                        <td class="book-genre">${escapeHtml(book.genre || 'N/A')}</td>
+                        <td class="book-year">${book.publication_year || 'N/A'}</td>
                     `;
                     tbody.appendChild(row);
                 });
@@ -125,7 +130,7 @@
         }
         
         // Simple table sorting
-        let sortDirection = { 1: 1, 2: 1 }; // 1 = ascending, -1 = descending
+        let sortDirection = { 1: 1, 2: 1, 4: 1, 5: 1 }; // 1 = ascending, -1 = descending
         
         function sortTable(columnIndex) {
             const table = document.getElementById('books-table');
@@ -145,6 +150,8 @@
             // Update sort indicators
             document.getElementById('title-sort').textContent = columnIndex === 1 ? (sortDirection[1] === 1 ? '↑' : '↓') : '↕️';
             document.getElementById('author-sort').textContent = columnIndex === 2 ? (sortDirection[2] === 1 ? '↑' : '↓') : '↕️';
+            document.getElementById('genre-sort').textContent = columnIndex === 4 ? (sortDirection[4] === 1 ? '↑' : '↓') : '↕️';
+            document.getElementById('year-sort').textContent = columnIndex === 5 ? (sortDirection[5] === 1 ? '↑' : '↓') : '↕️';
         }
         
         // Simple search functionality
@@ -156,7 +163,17 @@
                 rows.forEach(row => {
                     const title = row.cells[1]?.textContent.toLowerCase() || '';
                     const author = row.cells[2]?.textContent.toLowerCase() || '';
-                    row.style.display = (title.includes(searchTerm) || author.includes(searchTerm)) ? '' : 'none';
+                    const isbn = row.cells[3]?.textContent.toLowerCase() || '';
+                    const genre = row.cells[4]?.textContent.toLowerCase() || '';
+                    const year = row.cells[5]?.textContent.toLowerCase() || '';
+                    
+                    const matches = title.includes(searchTerm) || 
+                                  author.includes(searchTerm) || 
+                                  isbn.includes(searchTerm) || 
+                                  genre.includes(searchTerm) || 
+                                  year.includes(searchTerm);
+                                  
+                    row.style.display = matches ? '' : 'none';
                 });
             });
         });
