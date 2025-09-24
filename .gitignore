@@ -3,8 +3,12 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
-package-lock.json
-yarn.lock
+
+# Lock files (choose one approach for your team)
+# Uncomment the following line if using npm
+# package-lock.json
+# Uncomment the following line if using yarn
+# yarn.lock
 
 # TypeScript
 *.tsbuildinfo
@@ -25,22 +29,25 @@ lib/
 .idea/
 *.swp
 *.swo
-.DS_Store
-Thumbs.db
+*.sublime-project
+*.sublime-workspace
 
 # Logs
 logs/
 *.log
 npm-debug.log*
-pids
+yarn-debug.log*
+yarn-error.log*
+pids/
 *.pid
 *.seed
 *.pid.lock
 
 # Testing
 coverage/
-.nyc_output
+.nyc_output/
 test-results/
+.jest/
 
 # Production build
 build/
@@ -51,6 +58,7 @@ out/
 tmp/
 temp/
 .cache/
+.parcel-cache/
 
 # Database files (SQLite)
 *.db
@@ -58,10 +66,10 @@ temp/
 *.sqlite
 *.sqlite3
 *.sqlite-journal
-library.db*
+# Keep sample database if needed for development
+# library.db
 
 # Runtime data
-pids
 *.pid
 *.seed
 *.pid.lock
@@ -69,9 +77,10 @@ pids
 # Optional npm cache directory
 .npm
 
-# Linter and formatter caches
+# Code quality tools
 .eslintcache
 .biome/
+.prettier/
 
 # Output of 'npm pack'
 *.tgz
@@ -82,6 +91,7 @@ pids
 # Backup files
 *.backup
 *.bak
+*~
 
 # OS generated files
 .DS_Store
@@ -91,3 +101,13 @@ pids
 .Trashes
 ehthumbs.db
 Thumbs.db
+Desktop.ini
+
+# Architecture documentation artifacts (optional)
+# Uncomment if you don't want to track these
+# *.drawio.bkp
+# *.drawio~
+
+# Development artifacts
+.history/
+.vscode-test/

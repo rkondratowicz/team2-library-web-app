@@ -6,24 +6,21 @@ import sqlite3 from 'sqlite3';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-export interface Book {
-  id: string;
-  title: string;
-  author: string;
-  created_at?: string;
-}
-
 interface QueryResult {
   count: number;
   [key: string]: unknown;
 }
 
-class DatabaseService {
+/**
+ * Database Connection Manager
+ * Handles interactions with the database - CRUD operations and migration files
+ */
+export class DatabaseConnection {
   private db: sqlite3.Database | null = null;
   private dbPath: string;
 
   constructor() {
-    this.dbPath = path.join(__dirname, '..', 'library.db');
+    this.dbPath = path.join(__dirname, '..', '..', '..', 'library.db');
   }
 
   async connect(): Promise<void> {
@@ -40,7 +37,7 @@ class DatabaseService {
   }
 
   async runMigrations(): Promise<void> {
-    const migrationsDir = path.join(__dirname, '..', 'migrations');
+    const migrationsDir = path.join(__dirname, 'migrations');
 
     if (!fs.existsSync(migrationsDir)) {
       console.log('No migrations directory found');
@@ -62,7 +59,7 @@ class DatabaseService {
   }
 
   async populateSampleData(): Promise<void> {
-    const scriptsDir = path.join(__dirname, '..', 'scripts');
+    const scriptsDir = path.join(__dirname, '..', '..', '..', 'scripts');
     const populateScript = path.join(scriptsDir, 'populate-sample-books.sql');
 
     if (fs.existsSync(populateScript)) {
@@ -78,51 +75,14 @@ class DatabaseService {
     }
   }
 
-  async getAllBooks(): Promise<Book[]> {
+  async run(sql: string, params: unknown[] = []): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
         return;
       }
 
-      this.db.all(
-        'SELECT * FROM books ORDER BY created_at DESC',
-        (err, rows) => {
-          if (err) {
-            reject(err);
-          } else {
-            resolve(rows as Book[]);
-          }
-        }
-      );
-    });
-  }
-
-  async getBookById(id: string): Promise<Book | null> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) {
-        reject(new Error('Database not connected'));
-        return;
-      }
-
-      this.db.get('SELECT * FROM books WHERE id = ?', [id], (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve((row as Book) || null);
-        }
-      });
-    });
-  }
-
-  private async run(sql: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) {
-        reject(new Error('Database not connected'));
-        return;
-      }
-
-      this.db.run(sql, (err) => {
+      this.db.run(sql, params, (err) => {
         if (err) {
           reject(err);
         } else {
@@ -132,18 +92,35 @@ class DatabaseService {
     });
   }
 
-  private async get(sql: string): Promise<QueryResult> {
+  async get(sql: string, params: unknown[] = []): Promise<QueryResult> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
         return;
       }
 
-      this.db.get(sql, (err, row) => {
+      this.db.get(sql, params, (err, row) => {
         if (err) {
           reject(err);
         } else {
           resolve(row as QueryResult);
+        }
+      });
+    });
+  }
+
+  async all(sql: string, params: unknown[] = []): Promise<QueryResult[]> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error('Database not connected'));
+        return;
+      }
+
+      this.db.all(sql, params, (err, rows) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve(rows as QueryResult[]);
         }
       });
     });
@@ -166,6 +143,8 @@ class DatabaseService {
       });
     });
   }
-}
 
-export const databaseService = new DatabaseService();
+  getDatabase(): sqlite3.Database | null {
+    return this.db;
+  }
+}

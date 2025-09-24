@@ -143,23 +143,40 @@ Returns all books in JSON format:
 
 ## Project Structure
 
+This project follows a **3-Tier Architecture** for better maintainability and separation of concerns:
+
 ```
-team2-library-web-app/
-├── app.ts               # Express application entry point
-├── database.ts          # SQLite database service  
-├── library.db          # SQLite database file (generated)
-├── package.json        # Dependencies and npm scripts
-├── tsconfig.json       # TypeScript configuration
-├── biome.json          # Biome formatter/linter config
-├── public/             # Static web assets
-│   ├── index.html      # Main HTML page with Bootstrap
-│   └── styles.css      # Custom CSS enhancements
-├── dist/               # Compiled JavaScript output
-├── database/
-│   └── migrations/     # Database migration files
-└── scripts/            # Database utility scripts
-    └── populate-sample-books.sql
+src/
+├── app.ts                          # Main entry point
+├── presentation/                   # 📱 Presentation Tier
+│   ├── controllers/
+│   │   ├── book.controller.ts     # API request handlers
+│   │   └── view.controller.ts     # Page rendering
+│   └── views/
+│       └── public/                # Static files (HTML, CSS)
+│           ├── index.html
+│           └── styles.css
+├── application/                    # 🔧 Application Tier (Business Logic)
+│   ├── services/
+│   │   └── book.service.ts        # Business rules & validation
+│   └── models/
+│       └── book.model.ts          # Data models & validation
+└── data-access/                   # 💾 Data Access Tier
+    ├── repositories/
+    │   └── book.repository.ts     # Database operations
+    ├── migrations/
+    │   └── 001-create-first-table.sql
+    └── database.connection.ts     # Database connection manager
+dist/                              # Compiled JavaScript output
+scripts/                          # Database utility scripts
+ARCHITECTURE.md                   # Detailed architecture documentation
 ```
+
+### Architecture Benefits
+- **Separation of Concerns**: Each tier has a single responsibility
+- **Maintainability**: Changes in one tier don't affect others  
+- **Testability**: Each layer can be tested independently
+- **Scalability**: Easier to scale individual components
 
 ## Contributing
 
