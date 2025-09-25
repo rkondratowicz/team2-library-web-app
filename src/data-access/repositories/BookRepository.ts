@@ -1,4 +1,4 @@
-import { randomUUID } from 'crypto';
+import { randomUUID } from 'node:crypto';
 import type {
   Book,
   BookSearchOptions,
@@ -73,8 +73,10 @@ export class BookRepository {
       }
 
       return newBook;
-    } catch (error: any) {
-      if (error.message.includes('UNIQUE constraint failed: books.isbn')) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('UNIQUE constraint failed: books.isbn')) {
         throw new Error(`ISBN ${bookData.isbn} already exists`);
       }
       throw error;
@@ -125,8 +127,10 @@ export class BookRepository {
     try {
       await databaseConnection.run(sql, values);
       return this.getBookById(id);
-    } catch (error: any) {
-      if (error.message.includes('UNIQUE constraint failed: books.isbn')) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('UNIQUE constraint failed: books.isbn')) {
         throw new Error(`ISBN ${updates.isbn} already exists`);
       }
       throw error;
@@ -140,7 +144,7 @@ export class BookRepository {
     try {
       await databaseConnection.run(sql, [id]);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -272,10 +276,10 @@ export class BookRepository {
 
   // Get all genres
   async getAllGenres(): Promise<string[]> {
-    const rows = await databaseConnection.all(
+    const rows = (await databaseConnection.all(
       'SELECT DISTINCT genre FROM books WHERE genre IS NOT NULL ORDER BY genre'
-    );
-    return rows.map((row: any) => row.genre);
+    )) as { genre: string }[];
+    return rows.map((row) => row.genre);
   }
 
   // Count books

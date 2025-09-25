@@ -39,13 +39,15 @@ export class MemberRepository {
       }
 
       return newMember;
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
       if (
-        error.message.includes('UNIQUE constraint failed: members.member_id')
+        errorMessage.includes('UNIQUE constraint failed: members.member_id')
       ) {
         throw new Error(`Member ID ${memberId} already exists`);
       }
-      if (error.message.includes('UNIQUE constraint failed: members.email')) {
+      if (errorMessage.includes('UNIQUE constraint failed: members.email')) {
         throw new Error(`Email ${memberData.email} is already registered`);
       }
       throw error;
@@ -216,8 +218,10 @@ export class MemberRepository {
     try {
       await databaseConnection.run(sql, values);
       return this.findById(id);
-    } catch (error: any) {
-      if (error.message.includes('UNIQUE constraint failed: members.email')) {
+    } catch (error: unknown) {
+      const errorMessage =
+        error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('UNIQUE constraint failed: members.email')) {
         throw new Error(`Email ${updates.email} is already registered`);
       }
       throw error;
@@ -232,7 +236,7 @@ export class MemberRepository {
     try {
       await databaseConnection.run(sql, [MemberStatus.INACTIVE, id]);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -244,7 +248,7 @@ export class MemberRepository {
     try {
       await databaseConnection.run(sql, [id]);
       return true;
-    } catch (error) {
+    } catch (_error) {
       return false;
     }
   }
@@ -259,11 +263,11 @@ export class MemberRepository {
 
   // Count members by status
   async countByStatus(status: MemberStatus): Promise<number> {
-    const result = await databaseConnection.getOne(
+    const result = (await databaseConnection.getOne(
       'SELECT COUNT(*) as count FROM members WHERE status = ?',
       [status]
-    );
-    return (result as any).count as number;
+    )) as { count: number };
+    return result.count;
   }
 
   // Generate next member ID
@@ -278,11 +282,11 @@ export class MemberRepository {
 
   // Check if member ID exists
   async checkMemberIdExists(memberId: string): Promise<boolean> {
-    const result = await databaseConnection.getOne(
+    const result = (await databaseConnection.getOne(
       'SELECT COUNT(*) as count FROM members WHERE member_id = ?',
       [memberId]
-    );
-    return ((result as any).count as number) > 0;
+    )) as { count: number };
+    return result.count > 0;
   }
 
   // Get member statistics
@@ -311,9 +315,9 @@ export class MemberRepository {
 
     return {
       total: totalResult.count as number,
-      active: (activeResult as any).count as number,
-      inactive: (inactiveResult as any).count as number,
-      suspended: (suspendedResult as any).count as number,
+      active: (activeResult as { count: number }).count,
+      inactive: (inactiveResult as { count: number }).count,
+      suspended: (suspendedResult as { count: number }).count,
       newThisMonth: newThisMonthResult.count as number,
       newThisYear: newThisYearResult.count as number,
     };

@@ -228,10 +228,10 @@ export class BookService {
 
     let sum = 0;
     for (let i = 0; i < 9; i++) {
-      sum += parseInt(isbn[i]) * (10 - i);
+      sum += parseInt(isbn[i], 10) * (10 - i);
     }
 
-    const checkDigit = isbn[9] === 'X' ? 10 : parseInt(isbn[9]);
+    const checkDigit = isbn[9] === 'X' ? 10 : parseInt(isbn[9], 10);
     sum += checkDigit;
 
     return sum % 11 === 0;
@@ -244,10 +244,10 @@ export class BookService {
 
     let sum = 0;
     for (let i = 0; i < 12; i++) {
-      sum += parseInt(isbn[i]) * (i % 2 === 0 ? 1 : 3);
+      sum += parseInt(isbn[i], 10) * (i % 2 === 0 ? 1 : 3);
     }
 
-    const checkDigit = parseInt(isbn[12]);
+    const checkDigit = parseInt(isbn[12], 10);
     const calculatedCheck = (10 - (sum % 10)) % 10;
 
     return checkDigit === calculatedCheck;

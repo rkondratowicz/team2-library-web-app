@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { bookService } from '../../application/services/BookService.js';
 
 export class BookController {
-  async getAllBooks(req: Request, res: Response): Promise<void> {
+  async getAllBooks(_req: Request, res: Response): Promise<void> {
     try {
       const books = await bookService.getAllBooks();
       res.json(books);
