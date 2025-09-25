@@ -52,7 +52,8 @@
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="book-genre" class="form-label">Genre</label>
-                                    <input type="text" class="form-control" id="book-genre">
+                                    <input type="text" class="form-control" id="book-genre" maxlength="32" placeholder="e.g., Fiction, Science">
+                                    <div class="form-text">Max: 32 characters</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="book-year" class="form-label">Publication Year</label>
@@ -142,7 +143,8 @@
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="edit-book-genre" class="form-label">Genre</label>
-                                <input type="text" class="form-control" id="edit-book-genre" placeholder="e.g., Fiction, Science">
+                                <input type="text" class="form-control" id="edit-book-genre" placeholder="e.g., Fiction, Science" maxlength="32">
+                                <div class="form-text">Max: 32 characters</div>
                             </div>
                             <div class="col-md-4 mb-3">
                                 <label for="edit-book-year" class="form-label">Publication Year</label>
@@ -385,11 +387,18 @@
                     return;
                 }
                 
+                const genre = document.getElementById('book-genre').value.trim();
+                if (genre && genre.length > 32) {
+                    document.getElementById('form-error').textContent = 'Genre cannot exceed 32 characters';
+                    document.getElementById('form-error').classList.remove('d-none');
+                    return;
+                }
+                
                 const formData = {
                     title: title,
                     author: author,
                     isbn: isbn || undefined,
-                    genre: document.getElementById('book-genre').value.trim() || undefined,
+                    genre: genre || undefined,
                     publication_year: year ? parseInt(year) : undefined,
                     description: document.getElementById('book-description').value.trim() || undefined
                 };
@@ -492,11 +501,18 @@
                     return;
                 }
                 
+                const genre = document.getElementById('edit-book-genre').value.trim();
+                if (genre && genre.length > 32) {
+                    document.getElementById('edit-form-error').textContent = 'Genre cannot exceed 32 characters';
+                    document.getElementById('edit-form-error').classList.remove('d-none');
+                    return;
+                }
+                
                 const formData = {
                     title: title,
                     author: author,
                     isbn: isbn || undefined,
-                    genre: document.getElementById('edit-book-genre').value.trim() || undefined,
+                    genre: genre || undefined,
                     publication_year: year ? parseInt(year) : undefined,
                     description: document.getElementById('edit-book-description').value.trim() || undefined
                 };
