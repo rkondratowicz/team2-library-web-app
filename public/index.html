@@ -24,6 +24,9 @@
                 <a class="nav-link" href="/members.html">
                     <i class="bi bi-people"></i> Members
                 </a>
+                <a class="nav-link" href="/returns.html">
+                    <i class="bi bi-arrow-return-left"></i> Returns
+                </a>
             </div>
         </div>
     </nav>
@@ -189,6 +192,66 @@
         </div>
     </div>
 
+    <!-- Member Selection Modal for Borrowing -->
+    <div class="modal fade" id="memberSelectionModal" tabindex="-1" aria-labelledby="memberSelectionModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="memberSelectionModalLabel">📚 Select Member to Borrow Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <h6 id="selected-book-title" class="text-muted"></h6>
+                    </div>
+                    
+                    <!-- Member Search -->
+                    <div class="mb-3">
+                        <label for="member-search" class="form-label">Search Members</label>
+                        <input type="text" class="form-control" id="member-search" placeholder="Search by name or member ID..." onkeyup="searchMembers()">
+                    </div>
+                    
+                    <!-- Loading Indicator -->
+                    <div id="members-loading" class="text-center py-3">
+                        <div class="spinner-border text-primary" role="status">
+                            <span class="visually-hidden">Loading members...</span>
+                        </div>
+                        <p class="mt-2">Loading members...</p>
+                    </div>
+                    
+                    <!-- Members List -->
+                    <div id="members-list" class="d-none">
+                        <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                            <table class="table table-hover">
+                                <thead class="table-light sticky-top">
+                                    <tr>
+                                        <th>Member ID</th>
+                                        <th>Name</th>
+                                        <th>Email</th>
+                                        <th>Status</th>
+                                        <th>Active Borrows</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="members-tbody">
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Error Message -->
+                    <div id="members-error" class="alert alert-danger d-none" role="alert"></div>
+                    
+                    <!-- Borrowing Status -->
+                    <div id="borrow-status" class="alert d-none" role="alert"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         async function loadBooks() {
             try {
@@ -261,6 +324,11 @@
                     </td>
                     <td class="actions-cell">
                         <div class="btn-group" role="group" aria-label="Book actions">
+                            ${book.availableCopies > 0 ? 
+                                `<button class="btn btn-outline-warning btn-sm" onclick="event.stopPropagation(); borrowBook('${book.id}', '${escapeHtml(book.title)}')" title="Borrow Book">
+                                    <i class="bi bi-book"></i> Borrow
+                                </button>` : ''
+                            }
                             <button class="btn btn-outline-success btn-sm" onclick="event.stopPropagation(); addCopy('${book.id}', '${escapeHtml(book.title)}')" title="Add Copy">
                                 <i class="bi bi-plus-circle"></i> Copy
                             </button>
@@ -810,6 +878,168 @@
                 
                 // Hide success message
                 document.getElementById('edit-form-success').classList.add('d-none');
+            }
+        }
+
+        // Borrowing functionality
+        let selectedBookId = null;
+        let selectedBookTitle = null;
+        let membersCache = [];
+        
+        async function borrowBook(bookId, bookTitle) {
+            selectedBookId = bookId;
+            selectedBookTitle = bookTitle;
+            
+            // Set the book title in the modal
+            document.getElementById('selected-book-title').textContent = `Borrowing: ${bookTitle}`;
+            
+            // Reset modal state
+            document.getElementById('member-search').value = '';
+            document.getElementById('members-loading').classList.remove('d-none');
+            document.getElementById('members-list').classList.add('d-none');
+            document.getElementById('members-error').classList.add('d-none');
+            document.getElementById('borrow-status').classList.add('d-none');
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('memberSelectionModal'));
+            modal.show();
+            
+            // Load members
+            await loadMembersForBorrowing();
+        }
+        
+        async function loadMembersForBorrowing() {
+            try {
+                const response = await fetch('/api/members');
+                if (!response.ok) {
+                    throw new Error('Failed to load members');
+                }
+                
+                const members = await response.json();
+                membersCache = members;
+                
+                // Hide loading, show members list
+                document.getElementById('members-loading').classList.add('d-none');
+                document.getElementById('members-list').classList.remove('d-none');
+                
+                renderMembersForBorrowing(members);
+                
+            } catch (error) {
+                console.error('Error loading members:', error);
+                document.getElementById('members-loading').classList.add('d-none');
+                document.getElementById('members-error').textContent = `Error loading members: ${error.message}`;
+                document.getElementById('members-error').classList.remove('d-none');
+            }
+        }
+        
+        function renderMembersForBorrowing(members) {
+            const tbody = document.getElementById('members-tbody');
+            tbody.innerHTML = '';
+            
+            if (members.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center">
+                            <em>No members found</em>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            members.forEach(member => {
+                const row = document.createElement('tr');
+                const canBorrow = member.status === 'active' && (member.active_borrows || 0) < 3;
+                
+                row.innerHTML = `
+                    <td><strong>${member.member_id}</strong></td>
+                    <td>${escapeHtml(member.first_name)} ${escapeHtml(member.last_name)}</td>
+                    <td><small>${escapeHtml(member.email)}</small></td>
+                    <td>
+                        <span class="badge bg-${member.status === 'active' ? 'success' : member.status === 'inactive' ? 'secondary' : 'danger'}">
+                            ${member.status}
+                        </span>
+                    </td>
+                    <td>
+                        <span class="badge bg-${(member.active_borrows || 0) < 3 ? 'success' : 'warning'}">
+                            ${member.active_borrows || 0}/3
+                        </span>
+                    </td>
+                    <td>
+                        ${canBorrow ? 
+                            `<button class="btn btn-primary btn-sm" onclick="confirmBorrow('${member.member_id}', '${escapeHtml(member.first_name)} ${escapeHtml(member.last_name)}')">
+                                Select
+                            </button>` :
+                            `<button class="btn btn-secondary btn-sm" disabled title="${member.status !== 'active' ? 'Member not active' : 'Member has reached borrowing limit'}">
+                                Cannot Borrow
+                            </button>`
+                        }
+                    </td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        function searchMembers() {
+            const searchTerm = document.getElementById('member-search').value.toLowerCase().trim();
+            
+            if (!searchTerm) {
+                renderMembersForBorrowing(membersCache);
+                return;
+            }
+            
+            const filteredMembers = membersCache.filter(member => 
+                member.member_id.toLowerCase().includes(searchTerm) ||
+                member.first_name.toLowerCase().includes(searchTerm) ||
+                member.last_name.toLowerCase().includes(searchTerm) ||
+                member.email.toLowerCase().includes(searchTerm)
+            );
+            
+            renderMembersForBorrowing(filteredMembers);
+        }
+        
+        async function confirmBorrow(memberId, memberName) {
+            try {
+                // Show processing status
+                document.getElementById('borrow-status').textContent = 'Processing borrow request...';
+                document.getElementById('borrow-status').className = 'alert alert-info';
+                document.getElementById('borrow-status').classList.remove('d-none');
+                
+                const response = await fetch('/api/transactions/quickBorrowCopy', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        book_id: selectedBookId,
+                        member_id: memberId
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(result.error || 'Failed to borrow book');
+                }
+                
+                // Show success
+                document.getElementById('borrow-status').textContent = 
+                    `Success! "${selectedBookTitle}" has been borrowed by ${memberName}. Due date: ${new Date(result.due_date).toLocaleDateString()}`;
+                document.getElementById('borrow-status').className = 'alert alert-success';
+                
+                // Reload books to update availability
+                setTimeout(() => {
+                    loadBooks();
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('memberSelectionModal'));
+                    modal.hide();
+                }, 2000);
+                
+            } catch (error) {
+                console.error('Error borrowing book:', error);
+                document.getElementById('borrow-status').textContent = `Error: ${error.message}`;
+                document.getElementById('borrow-status').className = 'alert alert-danger';
+                document.getElementById('borrow-status').classList.remove('d-none');
             }
         }
 
