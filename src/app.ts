@@ -1,6 +1,6 @@
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import express from 'express';
-import path from 'path';
-import { fileURLToPath } from 'url';
 import { databaseConnection } from './data-access/DatabaseConnection.js';
 import { bookController } from './presentation/controllers/BookController.js';
 
@@ -15,7 +15,7 @@ app.use(express.json());
 // Serve static files from public directory
 app.use(express.static(path.join(__dirname, '..', 'public')));
 
-app.get('/', (req, res) => {
+app.get('/', (_req, res) => {
   res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
 });
 

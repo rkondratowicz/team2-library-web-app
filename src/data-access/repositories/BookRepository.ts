@@ -22,7 +22,13 @@ export class BookRepository {
       `SELECT * FROM books 
        WHERE title LIKE ? OR author LIKE ? OR isbn LIKE ? OR genre LIKE ? OR CAST(publication_year as TEXT) LIKE ?
        ORDER BY created_at DESC`,
-      [`%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`, `%${searchTerm}%`]
+      [
+        `%${searchTerm}%`,
+        `%${searchTerm}%`,
+        `%${searchTerm}%`,
+        `%${searchTerm}%`,
+        `%${searchTerm}%`,
+      ]
     );
     return rows as Book[];
   }
@@ -32,9 +38,17 @@ export class BookRepository {
     await databaseConnection.run(
       `INSERT INTO books (id, title, author, isbn, genre, publication_year, description) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
-      [id, book.title, book.author, book.isbn, book.genre, book.publication_year, book.description]
+      [
+        id,
+        book.title,
+        book.author,
+        book.isbn,
+        book.genre,
+        book.publication_year,
+        book.description,
+      ]
     );
-    
+
     const createdBook = await this.getBookById(id);
     if (!createdBook) {
       throw new Error('Failed to create book');

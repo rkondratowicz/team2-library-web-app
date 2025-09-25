@@ -12,6 +12,7 @@ dist/
 build/
 lib/
 *.d.ts.map
+*.js.map
 
 # Environment variables
 .env
@@ -41,6 +42,7 @@ pids
 coverage/
 .nyc_output
 test-results/
+__tests__/coverage/
 
 # Production build
 build/
@@ -72,6 +74,7 @@ pids
 # Linter and formatter caches
 .eslintcache
 .biome/
+.biome-cache/
 
 # Output of 'npm pack'
 *.tgz
@@ -91,3 +94,42 @@ pids
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+# Project specific - Development artifacts
+*.orig
+*.rej
+.merge_file_*
+
+# Project specific - Editor/IDE files
+.vscode/settings.json
+.vscode/launch.json
+.vscode/extensions.json
+.vscode/tasks.json
+
+# Project specific - Documentation drafts
+*.draft.md
+*.wip.md
+
+# Project specific - Local configuration
+local.json
+local.config.js
+.env.development
+.env.production
+
+# Project specific - Database backups
+*.db.backup
+*.sqlite.backup
+library-*.db
+
+# Project specific - Generated API docs  
+api-docs/
+docs/generated/
+
+# Project specific - Performance/profiling
+*.cpuprofile
+*.heapprofile
+.clinic/
+
+# Project specific - Local scripts
+scripts/local/
+scripts/dev/
