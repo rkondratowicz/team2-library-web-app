@@ -1,9 +1,8 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sqlite3 from 'sqlite3';
-import { promisify } from 'util';
-import fs from 'fs';
-import path from 'path';
-import { fileURLToPath } from 'url';
-import { Book, QueryResult } from '../types/database.js';
+import type { Book, QueryResult } from '../types/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
