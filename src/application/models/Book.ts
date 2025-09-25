@@ -44,4 +44,5 @@ export interface BookSearchOptions {
 export interface BookWithDetails extends Book {
   age_years?: number; // Computed: current year - publication_year
   has_isbn?: boolean; // Computed: whether ISBN is provided
+  created_at?: string;
 }
