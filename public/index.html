@@ -100,6 +100,7 @@
                                         <th scope="col">ISBN</th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(4)">Genre <span id="genre-sort">↕️</span></th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(5)">Year <span id="year-sort">↕️</span></th>
+                                        <th scope="col">Copies</th>
                                         <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
@@ -173,7 +174,7 @@
     <script>
         async function loadBooks() {
             try {
-                const response = await fetch('/api/books');
+                const response = await fetch('/api/books/with-copies');
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
                 }
@@ -213,7 +214,7 @@
             if (books.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="7" class="text-center empty-state">
+                        <td colspan="8" class="text-center empty-state">
                             <div class="empty-state-icon">📚</div>
                             <em>No books found in the library.</em>
                         </td>
@@ -234,12 +235,21 @@
                     <td class="book-isbn">${book.isbn || 'N/A'}</td>
                     <td class="book-genre">${escapeHtml(book.genre || 'N/A')}</td>
                     <td class="book-year">${book.publication_year || 'N/A'}</td>
+                    <td class="book-copies">
+                        ${book.totalCopies === 0 ? 
+                            '<span class="badge bg-secondary">No copies</span>' :
+                            `<span class="badge ${book.availableCopies > 0 ? 'bg-success' : 'bg-warning'}">${book.availableCopies}/${book.totalCopies}</span>`
+                        }
+                    </td>
                     <td class="actions-cell">
-                        <button class="btn btn-primary btn-sm me-2" onclick="event.stopPropagation(); editBook('${book.id}')">
-                            ✏️ Edit
+                        <button class="btn btn-success btn-sm me-1" onclick="event.stopPropagation(); addCopy('${book.id}', '${escapeHtml(book.title)}')" title="Add Copy">
+                            📚+
+                        </button>
+                        <button class="btn btn-primary btn-sm me-1" onclick="event.stopPropagation(); editBook('${book.id}')">
+                            ✏️
                         </button>
                         <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteBook('${book.id}', '${escapeHtml(book.title)}')">
-                            🗑️ Delete
+                            🗑️
                         </button>
                     </td>
                 `;
@@ -533,6 +543,40 @@
             } catch (error) {
                 console.error('Error deleting book:', error);
                 alert(`Error deleting book: ${error.message}`);
+            }
+        }
+
+        // Add copy functionality
+        async function addCopy(bookId, bookTitle) {
+            const copyNumber = prompt(`Add a copy for "${bookTitle}"\n\nEnter copy number (e.g., "001", "A-1"):`);
+            if (!copyNumber) return;
+
+            try {
+                const response = await fetch(`/api/books/${bookId}/copies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        book_id: bookId,
+                        copy_number: copyNumber.trim(),
+                        status: 'Available',
+                        condition_notes: 'New copy'
+                    })
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to add copy');
+                }
+
+                // Reload the books to show updated copy counts
+                loadBooks();
+                alert(`Copy "${copyNumber}" added successfully!`);
+
+            } catch (error) {
+                console.error('Error adding copy:', error);
+                alert(`Error adding copy: ${error.message}`);
             }
         }
 
