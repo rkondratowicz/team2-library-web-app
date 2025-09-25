@@ -3,13 +3,12 @@ import { rentalAnalyticsService } from '../../application/services/RentalAnalyti
 
 /**
  * Rental Controller
- * 
+ *
  * Provides REST API endpoints for book rental tracking and analytics.
  * Exposes the RentalAnalyticsService methods through HTTP endpoints.
  */
 
 export class RentalController {
-  
   /**
    * GET /api/rentals/books/:bookId/current-borrowers
    * Get all current borrowers for a specific book
@@ -23,13 +22,14 @@ export class RentalController {
         return;
       }
 
-      const currentBorrowers = await rentalAnalyticsService.getCurrentBorrowersForBook(bookId);
-      
+      const currentBorrowers =
+        await rentalAnalyticsService.getCurrentBorrowersForBook(bookId);
+
       res.json({
         book_id: bookId,
         current_borrowers: currentBorrowers,
         total_current_borrowers: currentBorrowers.length,
-        has_overdue: currentBorrowers.some(borrower => borrower.is_overdue)
+        has_overdue: currentBorrowers.some((borrower) => borrower.is_overdue),
       });
     } catch (error) {
       console.error('Error fetching current borrowers:', error);
@@ -54,13 +54,14 @@ export class RentalController {
         return;
       }
 
-      const allBorrowers = await rentalAnalyticsService.getMembersByBookId(bookId);
-      
+      const allBorrowers =
+        await rentalAnalyticsService.getMembersByBookId(bookId);
+
       res.json({
         book_id: bookId,
         all_borrowers: allBorrowers,
         total_borrowers: allBorrowers.length,
-        unique_borrowers: new Set(allBorrowers.map(b => b.member_id)).size
+        unique_borrowers: new Set(allBorrowers.map((b) => b.member_id)).size,
       });
     } catch (error) {
       console.error('Error fetching all borrowers:', error);
@@ -85,8 +86,9 @@ export class RentalController {
         return;
       }
 
-      const summary = await rentalAnalyticsService.getCurrentBorrowerSummaryForBook(bookId);
-      
+      const summary =
+        await rentalAnalyticsService.getCurrentBorrowerSummaryForBook(bookId);
+
       res.json(summary);
     } catch (error) {
       console.error('Error fetching book summary:', error);
@@ -106,26 +108,31 @@ export class RentalController {
   async getCurrentBooksByMember(req: Request, res: Response): Promise<void> {
     try {
       const memberId = req.params.memberId;
-      
+
       // Handle both numeric ID and member_id format
       const memberIdNum = Number.parseInt(memberId, 10);
-      const queryId = Number.isNaN(memberIdNum) ? memberId : memberIdNum.toString();
+      const queryId = Number.isNaN(memberIdNum)
+        ? memberId
+        : memberIdNum.toString();
 
-      const currentBooks = await rentalAnalyticsService.getCurrentBooksByMemberId(queryId);
-      
+      const currentBooks =
+        await rentalAnalyticsService.getCurrentBooksByMemberId(queryId);
+
       res.json({
         member_id: queryId,
         current_books: currentBooks,
         total_current_books: currentBooks.length,
-        has_overdue: currentBooks.some(book => book.is_overdue),
-        overdue_books: currentBooks.filter(book => book.is_overdue)
+        has_overdue: currentBooks.some((book) => book.is_overdue),
+        overdue_books: currentBooks.filter((book) => book.is_overdue),
       });
     } catch (error) {
       console.error('Error fetching current books for member:', error);
       if (error instanceof Error) {
         res.status(400).json({ error: error.message });
       } else {
-        res.status(500).json({ error: 'Failed to fetch current books for member' });
+        res
+          .status(500)
+          .json({ error: 'Failed to fetch current books for member' });
       }
     }
   }
@@ -138,20 +145,23 @@ export class RentalController {
   async getAllBooksByMember(req: Request, res: Response): Promise<void> {
     try {
       const memberId = req.params.memberId;
-      
+
       // Handle both numeric ID and member_id format
       const memberIdNum = Number.parseInt(memberId, 10);
-      const queryId = Number.isNaN(memberIdNum) ? memberId : memberIdNum.toString();
+      const queryId = Number.isNaN(memberIdNum)
+        ? memberId
+        : memberIdNum.toString();
 
       const allBooks = await rentalAnalyticsService.getBooksByMemberId(queryId);
-      
+
       res.json({
         member_id: queryId,
         all_books: allBooks,
         total_books_borrowed: allBooks.length,
-        unique_books: new Set(allBooks.map(b => b.id)).size,
-        completed_rentals: allBooks.filter(b => b.return_date !== null).length,
-        active_rentals: allBooks.filter(b => b.return_date === null).length
+        unique_books: new Set(allBooks.map((b) => b.id)).size,
+        completed_rentals: allBooks.filter((b) => b.return_date !== null)
+          .length,
+        active_rentals: allBooks.filter((b) => b.return_date === null).length,
       });
     } catch (error) {
       console.error('Error fetching all books for member:', error);
@@ -170,18 +180,19 @@ export class RentalController {
    */
   async getActiveSummary(_req: Request, res: Response): Promise<void> {
     try {
-      const associations = await rentalAnalyticsService.getMemberBookAssociations({
-        currentOnly: true,
-        limit: 100
-      });
+      const associations =
+        await rentalAnalyticsService.getMemberBookAssociations({
+          currentOnly: true,
+          limit: 100,
+        });
 
-      const overdueAssociations = associations.filter(a => a.is_overdue);
-      
+      const overdueAssociations = associations.filter((a) => a.is_overdue);
+
       res.json({
         total_active_rentals: associations.length,
         overdue_rentals: overdueAssociations.length,
         active_associations: associations,
-        overdue_associations: overdueAssociations
+        overdue_associations: overdueAssociations,
       });
     } catch (error) {
       console.error('Error fetching active summary:', error);
@@ -211,28 +222,23 @@ export class RentalController {
    */
   async getMemberBookAssociations(req: Request, res: Response): Promise<void> {
     try {
-      const {
-        memberId,
-        bookId,
-        currentOnly,
-        limit,
-        offset
-      } = req.query;
+      const { memberId, bookId, currentOnly, limit, offset } = req.query;
 
       const options: any = {};
-      
+
       if (memberId) options.memberId = memberId as string;
       if (bookId) options.bookId = bookId as string;
       if (currentOnly === 'true') options.currentOnly = true;
       if (limit) options.limit = Number.parseInt(limit as string, 10);
       if (offset) options.offset = Number.parseInt(offset as string, 10);
 
-      const associations = await rentalAnalyticsService.getMemberBookAssociations(options);
-      
+      const associations =
+        await rentalAnalyticsService.getMemberBookAssociations(options);
+
       res.json({
         total_associations: associations.length,
         associations,
-        filters_applied: options
+        filters_applied: options,
       });
     } catch (error) {
       console.error('Error fetching member-book associations:', error);
@@ -251,15 +257,16 @@ export class RentalController {
    */
   async getOverdueRentals(_req: Request, res: Response): Promise<void> {
     try {
-      const associations = await rentalAnalyticsService.getMemberBookAssociations({
-        currentOnly: true
-      });
+      const associations =
+        await rentalAnalyticsService.getMemberBookAssociations({
+          currentOnly: true,
+        });
 
-      const overdueRentals = associations.filter(a => a.is_overdue);
-      
+      const overdueRentals = associations.filter((a) => a.is_overdue);
+
       res.json({
         total_overdue: overdueRentals.length,
-        overdue_rentals: overdueRentals
+        overdue_rentals: overdueRentals,
       });
     } catch (error) {
       console.error('Error fetching overdue rentals:', error);
