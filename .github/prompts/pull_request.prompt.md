@@ -2,4 +2,4 @@
 mode: "agent"
 ----
 
-Pull request template has been successfully populated with the complete CRUD operations implementation details. The template now includes comprehensive information about the Delete and Edit book functionality that was implemented during this conversation.
+Fill out pull request template with an update of what has occured in this conversation so that when a pull request is created it is filled out with the relevant information.
