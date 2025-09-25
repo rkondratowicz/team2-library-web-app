@@ -224,7 +224,7 @@ export class TransactionController {
 
       // First, find all copies of the book
       const allCopies = await bookRepository.getCopiesForBook(book_id);
-      
+
       if (!allCopies || allCopies.length === 0) {
         res.status(404).json({
           error: 'No copies of this book found',
@@ -235,7 +235,9 @@ export class TransactionController {
       // Find an available copy
       let availableCopy = null;
       for (const copy of allCopies) {
-        const isAvailable = await transactionRepository.isCopyAvailable(copy.id);
+        const isAvailable = await transactionRepository.isCopyAvailable(
+          copy.id
+        );
         if (isAvailable) {
           availableCopy = copy;
           break;
