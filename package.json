@@ -9,9 +9,9 @@
     "start": "node dist/app.js",
     "dev": "npm run build && npm start",
     "clean": "rm -rf dist",
-    "format": "biome format --write .",
-    "lint": "biome lint .",
-    "check": "biome check --write ."
+    "format": "biome format --write src/",
+    "lint": "biome lint src/",
+    "check": "biome check --write src/"
   },
   "keywords": [
     "express",
