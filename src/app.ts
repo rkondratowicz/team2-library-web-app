@@ -129,6 +129,12 @@ app.post(
   transactionController.quickBorrowCopy.bind(transactionController)
 );
 
+// Alternative quick borrow route that matches frontend expectations
+app.post(
+  '/api/transactions/quickBorrowCopy',
+  transactionController.quickBorrowCopyByBookId.bind(transactionController)
+);
+
 // Rental Analytics API routes
 app.get(
   '/api/rentals/books/:bookId/current-borrowers',
