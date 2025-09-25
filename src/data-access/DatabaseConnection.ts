@@ -1,7 +1,7 @@
-import fs from 'fs';
-import path from 'path';
+import fs from 'node:fs';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import sqlite3 from 'sqlite3';
-import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -63,16 +63,32 @@ export class DatabaseConnection {
 
   async populateSampleData(): Promise<void> {
     const scriptsDir = path.join(__dirname, '..', '..', 'scripts');
-    const populateScript = path.join(scriptsDir, 'populate-sample-books.sql');
 
-    if (fs.existsSync(populateScript)) {
-      const count = await this.get('SELECT COUNT(*) as count FROM books');
-      if (count.count === 0) {
-        const sql = fs.readFileSync(populateScript, 'utf-8');
+    // Populate books sample data
+    const booksScript = path.join(scriptsDir, 'populate-sample-books.sql');
+    if (fs.existsSync(booksScript)) {
+      const booksCount = await this.get('SELECT COUNT(*) as count FROM books');
+      if (booksCount.count === 0) {
+        const sql = fs.readFileSync(booksScript, 'utf-8');
         await this.run(sql);
-        console.log('Sample data populated');
+        console.log('Sample books data populated');
       } else {
-        console.log('Sample data already exists, skipping population');
+        console.log('Sample books data already exists, skipping population');
+      }
+    }
+
+    // Populate members sample data
+    const membersScript = path.join(scriptsDir, 'populate-sample-members.sql');
+    if (fs.existsSync(membersScript)) {
+      const membersCount = await this.get(
+        'SELECT COUNT(*) as count FROM members'
+      );
+      if (membersCount.count === 0) {
+        const sql = fs.readFileSync(membersScript, 'utf-8');
+        await this.run(sql);
+        console.log('Sample members data populated');
+      } else {
+        console.log('Sample members data already exists, skipping population');
       }
     }
   }

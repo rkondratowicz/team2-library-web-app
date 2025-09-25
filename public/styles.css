@@ -56,7 +56,7 @@ body {
 }
 
 .books-table tbody tr:hover {
-  background-color: rgba(52, 152, 219, 0.08) !important;
+  background-color: rgba(52, 152, 219, 0.08);
 }
 
 .book-id {
