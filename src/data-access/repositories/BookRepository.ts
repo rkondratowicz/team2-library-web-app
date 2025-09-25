@@ -1,4 +1,5 @@
 import type { Book } from '../../application/models/Book.js';
+import type { BookCopy, CreateCopyRequest, UpdateCopyRequest, BookWithCopies } from '../../application/models/BookCopy.js';
 import { databaseConnection } from '../DatabaseConnection.js';
 
 export class BookRepository {
@@ -83,6 +84,105 @@ export class BookRepository {
     
     // Check if any rows were affected (book was actually deleted)
     return result.changes > 0;
+  }
+
+  // Copy management methods
+  async getCopiesForBook(bookId: string): Promise<BookCopy[]> {
+    const rows = await databaseConnection.all(
+      'SELECT * FROM book_copies WHERE book_id = ? ORDER BY copy_number',
+      [bookId]
+    );
+    return rows as BookCopy[];
+  }
+
+  async getCopyById(copyId: string): Promise<BookCopy | null> {
+    const row = await databaseConnection.getOne(
+      'SELECT * FROM book_copies WHERE id = ?',
+      [copyId]
+    );
+    return (row as BookCopy) || null;
+  }
+
+  async createCopy(copyData: CreateCopyRequest): Promise<BookCopy> {
+    const copyId = crypto.randomUUID();
+    
+    const result = await databaseConnection.run(
+      `INSERT INTO book_copies (id, book_id, copy_number, status, condition_notes, acquisition_date)
+       VALUES (?, ?, ?, ?, ?, ?)`,
+      [
+        copyId,
+        copyData.book_id,
+        copyData.copy_number,
+        copyData.status || 'Available',
+        copyData.condition_notes || null,
+        copyData.acquisition_date || new Date().toISOString().split('T')[0]
+      ]
+    );
+
+    const newCopy = await this.getCopyById(copyId);
+    if (!newCopy) {
+      throw new Error('Failed to retrieve created copy');
+    }
+    return newCopy;
+  }
+
+  async updateCopy(copyId: string, updateData: UpdateCopyRequest): Promise<BookCopy> {
+    const existingCopy = await this.getCopyById(copyId);
+    if (!existingCopy) {
+      throw new Error('Copy not found');
+    }
+
+    await databaseConnection.run(
+      `UPDATE book_copies 
+       SET copy_number = ?, status = ?, condition_notes = ?, acquisition_date = ?
+       WHERE id = ?`,
+      [
+        updateData.copy_number ?? existingCopy.copy_number,
+        updateData.status ?? existingCopy.status,
+        updateData.condition_notes ?? existingCopy.condition_notes,
+        updateData.acquisition_date ?? existingCopy.acquisition_date,
+        copyId
+      ]
+    );
+
+    const updatedCopy = await this.getCopyById(copyId);
+    if (!updatedCopy) {
+      throw new Error('Failed to retrieve updated copy');
+    }
+    return updatedCopy;
+  }
+
+  async deleteCopy(copyId: string): Promise<boolean> {
+    const result = await databaseConnection.run(
+      'DELETE FROM book_copies WHERE id = ?',
+      [copyId]
+    );
+    
+    return result.changes > 0;
+  }
+
+  async getBookWithCopies(bookId: string): Promise<BookWithCopies | null> {
+    const book = await this.getBookById(bookId);
+    if (!book) {
+      return null;
+    }
+
+    const copies = await this.getCopiesForBook(bookId);
+    const availableCopies = copies.filter(copy => copy.status === 'Available').length;
+
+    return {
+      id: book.id,
+      title: book.title,
+      author: book.author,
+      isbn: book.isbn,
+      genre: book.genre,
+      publication_year: book.publication_year,
+      description: book.description,
+      created_at: book.created_at || new Date().toISOString(),
+      copies,
+      total_copies: copies.length,
+      available_copies: availableCopies
+    };
   }
 }
 

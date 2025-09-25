@@ -90,6 +90,70 @@ export class BookController {
       }
     }
   }
+
+  // Copy management methods for testing
+  async getBookWithCopies(req: Request, res: Response): Promise<void> {
+    try {
+      const bookRepository = await import('../../data-access/repositories/BookRepository.js');
+      const bookWithCopies = await bookRepository.bookRepository.getBookWithCopies(req.params.id);
+      
+      if (bookWithCopies) {
+        res.json(bookWithCopies);
+      } else {
+        res.status(404).json({ error: 'Book not found' });
+      }
+    } catch (error) {
+      console.error('Error fetching book with copies:', error);
+      res.status(500).json({ error: 'Failed to fetch book with copies' });
+    }
+  }
+
+  async addCopyToBook(req: Request, res: Response): Promise<void> {
+    try {
+      const bookRepository = await import('../../data-access/repositories/BookRepository.js');
+      const { copy_number, status, condition_notes } = req.body;
+      
+      const copyData = {
+        book_id: req.params.id,
+        copy_number: copy_number || '1',
+        status: status || 'Available',
+        condition_notes
+      };
+
+      const newCopy = await bookRepository.bookRepository.createCopy(copyData);
+      res.status(201).json(newCopy);
+    } catch (error) {
+      console.error('Error adding copy:', error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'Failed to add copy' });
+      }
+    }
+  }
+
+  async getAllBooksWithCopies(_req: Request, res: Response): Promise<void> {
+    try {
+      const books = await bookService.getAllBooks();
+      const booksWithCopies = [];
+
+      for (const book of books) {
+        const copies = await bookService.getCopiesForBook(book.id);
+        const availableCopies = copies.filter(copy => copy.status === 'Available').length;
+        
+        booksWithCopies.push({
+          ...book,
+          totalCopies: copies.length,
+          availableCopies: availableCopies
+        });
+      }
+
+      res.json(booksWithCopies);
+    } catch (error) {
+      console.error('Error fetching books with copies:', error);
+      res.status(500).json({ error: 'Failed to fetch books with copies' });
+    }
+  }
 }
 
 export const bookController = new BookController();

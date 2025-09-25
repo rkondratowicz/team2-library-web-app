@@ -133,6 +133,10 @@ export class BookService {
       throw new Error('Failed to delete book');
     }
   }
+
+  async getCopiesForBook(bookId: string) {
+    return await bookRepository.getCopiesForBook(bookId);
+  }
 }
 
 export const bookService = new BookService();
