@@ -29,17 +29,31 @@ export class BookRepository {
 
   async createBook(book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
     const id = crypto.randomUUID();
-    await databaseConnection.run(
+    const result = await databaseConnection.run(
       `INSERT INTO books (id, title, author, isbn, genre, publication_year, description) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [id, book.title, book.author, book.isbn, book.genre, book.publication_year, book.description]
     );
     
-    const createdBook = await this.getBookById(id);
-    if (!createdBook) {
+    if (result.changes === 0) {
       throw new Error('Failed to create book');
     }
+    
+    const createdBook = await this.getBookById(id);
+    if (!createdBook) {
+      throw new Error('Failed to retrieve created book');
+    }
     return createdBook;
+  }
+
+  async deleteBook(id: string): Promise<boolean> {
+    const result = await databaseConnection.run(
+      'DELETE FROM books WHERE id = ?',
+      [id]
+    );
+    
+    // Check if any rows were affected (book was actually deleted)
+    return result.changes > 0;
   }
 }
 

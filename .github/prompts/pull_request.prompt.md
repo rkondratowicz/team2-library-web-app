@@ -1,4 +1,5 @@
 ----
 mode: "agent"
 ----
-Define the task to achieve, including specific requirements, constraints, and success criteria.
+
+Fill out the pull_request_prompt.md with the current changes made from this conversation.

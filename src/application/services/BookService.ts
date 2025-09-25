@@ -55,6 +55,23 @@ export class BookService {
 
     return await bookRepository.createBook(bookData);
   }
+
+  async deleteBook(id: string): Promise<void> {
+    if (!id?.trim()) {
+      throw new Error('Book ID is required');
+    }
+
+    // Check if book exists before deleting
+    const existingBook = await bookRepository.getBookById(id);
+    if (!existingBook) {
+      throw new Error('Book not found');
+    }
+
+    const wasDeleted = await bookRepository.deleteBook(id);
+    if (!wasDeleted) {
+      throw new Error('Failed to delete book');
+    }
+  }
 }
 
 export const bookService = new BookService();
