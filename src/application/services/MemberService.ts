@@ -3,7 +3,6 @@ import {
   type CreateMemberRequest,
   type Member,
   type MemberSearchOptions,
-  MemberStatistics,
   MemberStatus,
   type UpdateMemberRequest,
 } from '../models/Member.js';
@@ -275,3 +274,7 @@ export class MemberService {
     return members.length;
   }
 }
+
+// Create and export member service instance
+import { memberRepository } from '../../data-access/repositories/MemberRepository.js';
+export const memberService = new MemberService(memberRepository);
