@@ -9,6 +9,13 @@ export class BookService {
   async getBookById(id: string): Promise<Book | null> {
     return await bookRepository.getBookById(id);
   }
+
+  async searchBooks(searchTerm: string): Promise<Book[]> {
+    if (!searchTerm.trim()) {
+      return await this.getAllBooks();
+    }
+    return await bookRepository.searchBooks(searchTerm.trim());
+  }
 }
 
 export const bookService = new BookService();

@@ -38,8 +38,9 @@
 
                 <!-- Books Table -->
                 <div class="card books-table-card">
-                    <div class="card-header">
+                    <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">📖 Books Collection</h5>
+                        <input type="text" class="form-control" id="search-books" placeholder="Search books..." style="max-width: 250px;">
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -47,8 +48,11 @@
                                 <thead class="table-dark">
                                     <tr>
                                         <th scope="col">ID</th>
-                                        <th scope="col">Title</th>
-                                        <th scope="col">Author</th>
+                                        <th scope="col" style="cursor: pointer;" onclick="sortTable(1)">Title <span id="title-sort">↕️</span></th>
+                                        <th scope="col" style="cursor: pointer;" onclick="sortTable(2)">Author <span id="author-sort">↕️</span></th>
+                                        <th scope="col">ISBN</th>
+                                        <th scope="col" style="cursor: pointer;" onclick="sortTable(4)">Genre <span id="genre-sort">↕️</span></th>
+                                        <th scope="col" style="cursor: pointer;" onclick="sortTable(5)">Year <span id="year-sort">↕️</span></th>
                                     </tr>
                                 </thead>
                                 <tbody id="books-tbody">
@@ -81,32 +85,7 @@
                 setTimeout(() => bookCountElement.classList.remove('count-animate'), 300);
                 
                 // Render books in table
-                const tbody = document.getElementById('books-tbody');
-                tbody.innerHTML = '';
-                
-                if (books.length === 0) {
-                    tbody.innerHTML = `
-                        <tr>
-                            <td colspan="3" class="text-center empty-state">
-                                <div class="empty-state-icon">📚</div>
-                                <em>No books found in the library.</em>
-                            </td>
-                        </tr>
-                    `;
-                    return;
-                }
-                
-                books.forEach((book, index) => {
-                    const row = document.createElement('tr');
-                    row.className = 'book-row';
-                    row.style.animationDelay = `${index * 0.05}s`;
-                    row.innerHTML = `
-                        <td><span class="book-id">${book.id}</span></td>
-                        <td class="book-title">${escapeHtml(book.title)}</td>
-                        <td class="book-author">${escapeHtml(book.author)}</td>
-                    `;
-                    tbody.appendChild(row);
-                });
+                renderBooks(books);
                 
             } catch (error) {
                 console.error('Error loading books:', error);
@@ -123,6 +102,97 @@
             return div.innerHTML;
         }
         
+        function renderBooks(books) {
+            const tbody = document.getElementById('books-tbody');
+            tbody.innerHTML = '';
+            
+            if (books.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="text-center empty-state">
+                            <div class="empty-state-icon">📚</div>
+                            <em>No books found in the library.</em>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            books.forEach((book, index) => {
+                const row = document.createElement('tr');
+                row.className = 'book-row';
+                row.innerHTML = `
+                    <td><span class="book-id">${book.id}</span></td>
+                    <td class="book-title">${escapeHtml(book.title)}</td>
+                    <td class="book-author">${escapeHtml(book.author)}</td>
+                    <td class="book-isbn">${book.isbn || 'N/A'}</td>
+                    <td class="book-genre">${escapeHtml(book.genre || 'N/A')}</td>
+                    <td class="book-year">${book.publication_year || 'N/A'}</td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Simple table sorting
+        let sortDirection = { 1: 1, 2: 1, 4: 1, 5: 1 }; // 1 = ascending, -1 = descending
+        
+        function sortTable(columnIndex) {
+            const table = document.getElementById('books-table');
+            const tbody = table.querySelector('tbody');
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            
+            sortDirection[columnIndex] *= -1;
+            
+            rows.sort((a, b) => {
+                const aText = a.cells[columnIndex]?.textContent.toLowerCase() || '';
+                const bText = b.cells[columnIndex]?.textContent.toLowerCase() || '';
+                return aText.localeCompare(bText) * sortDirection[columnIndex];
+            });
+            
+            rows.forEach(row => tbody.appendChild(row));
+            
+            // Update sort indicators
+            document.getElementById('title-sort').textContent = columnIndex === 1 ? (sortDirection[1] === 1 ? '↑' : '↓') : '↕️';
+            document.getElementById('author-sort').textContent = columnIndex === 2 ? (sortDirection[2] === 1 ? '↑' : '↓') : '↕️';
+            document.getElementById('genre-sort').textContent = columnIndex === 4 ? (sortDirection[4] === 1 ? '↑' : '↓') : '↕️';
+            document.getElementById('year-sort').textContent = columnIndex === 5 ? (sortDirection[5] === 1 ? '↑' : '↓') : '↕️';
+        }
+        
+        // Server-side search functionality with debouncing
+        let searchTimeout;
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('search-books').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.trim();
+                
+                // Clear previous timeout
+                clearTimeout(searchTimeout);
+                
+                // Debounce search - wait 300ms after user stops typing
+                searchTimeout = setTimeout(async () => {
+                    try {
+                        const url = searchTerm 
+                            ? `/api/books/search?q=${encodeURIComponent(searchTerm)}`
+                            : '/api/books';
+                            
+                        const response = await fetch(url);
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+                        const books = await response.json();
+                        
+                        // Update book count
+                        document.getElementById('book-count').textContent = books.length;
+                        
+                        // Re-render table with search results
+                        renderBooks(books);
+                        
+                    } catch (error) {
+                        console.error('Error searching books:', error);
+                    }
+                }, 300);
+            });
+        });
+
         // Load books when page loads
         document.addEventListener('DOMContentLoaded', loadBooks);
         
