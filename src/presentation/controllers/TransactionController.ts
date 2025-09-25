@@ -233,16 +233,24 @@ export class TransactionController {
       }
 
       // Find an available copy
+      console.log(`Looking for available copies for book ${book_id}`);
+      console.log(`Found ${allCopies.length} total copies:`, allCopies.map(c => ({ id: c.id, status: c.status, copy_number: c.copy_number })));
+      
       let availableCopy = null;
       for (const copy of allCopies) {
+        console.log(`Checking copy ${copy.id} (${copy.copy_number}) with status: ${copy.status}`);
         const isAvailable = await transactionRepository.isCopyAvailable(
           copy.id
         );
+        console.log(`isCopyAvailable result for ${copy.id}: ${isAvailable}`);
         if (isAvailable) {
           availableCopy = copy;
+          console.log(`Found available copy: ${copy.id} (${copy.copy_number})`);
           break;
         }
       }
+      
+      console.log(`Final availableCopy:`, availableCopy);
 
       if (!availableCopy) {
         res.status(404).json({
@@ -252,10 +260,12 @@ export class TransactionController {
       }
 
       // Create the borrowing transaction using the same pattern as existing methods
+      console.log(`Attempting to borrow copy ${availableCopy.id} for member ${member_id}`);
       const transaction = await transactionService.borrowBook({
         book_copy_id: availableCopy.id,
         member_id: member_id,
       });
+      console.log(`Successfully created transaction:`, transaction);
 
       res.status(201).json({
         success: true,
