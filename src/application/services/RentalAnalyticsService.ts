@@ -1,11 +1,11 @@
 import { databaseConnection } from '../../data-access/DatabaseConnection.js';
-import type { Member, MemberStatus } from '../models/Member.js';
 import type { Book } from '../models/Book.js';
 import type { BorrowingTransaction } from '../models/BorrowingTransaction.js';
+import type { Member, MemberStatus } from '../models/Member.js';
 
 /**
  * Rental Analytics Service
- * 
+ *
  * Provides comprehensive analytics for book rental tracking, answering key questions:
  * - Which members have borrowed a specific book?
  * - What books has a specific member borrowed?
@@ -72,7 +72,6 @@ export interface CurrentBorrowerSummary {
 }
 
 export class RentalAnalyticsService {
-  
   /**
    * Get all members who have ever borrowed a specific book
    * Answers: "Which members have borrowed Book X?"
@@ -105,11 +104,11 @@ export class RentalAnalyticsService {
     `;
 
     const rows = await databaseConnection.all(query, [bookId]);
-    
+
     return rows.map((row: any) => ({
       ...row,
       is_overdue: Boolean(row.is_overdue),
-      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null
+      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null,
     })) as MemberBorrowRecord[];
   }
 
@@ -117,7 +116,9 @@ export class RentalAnalyticsService {
    * Get all current borrowers of a specific book
    * Answers: "Who currently has Book X?"
    */
-  async getCurrentBorrowersForBook(bookId: string): Promise<MemberBorrowRecord[]> {
+  async getCurrentBorrowersForBook(
+    bookId: string
+  ): Promise<MemberBorrowRecord[]> {
     const query = `
       SELECT DISTINCT 
         m.*,
@@ -147,11 +148,11 @@ export class RentalAnalyticsService {
     `;
 
     const rows = await databaseConnection.all(query, [bookId]);
-    
+
     return rows.map((row: any) => ({
       ...row,
       is_overdue: Boolean(row.is_overdue),
-      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null
+      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null,
     })) as MemberBorrowRecord[];
   }
 
@@ -188,11 +189,11 @@ export class RentalAnalyticsService {
     `;
 
     const rows = await databaseConnection.all(query, [memberId]);
-    
+
     return rows.map((row: any) => ({
       ...row,
       is_overdue: Boolean(row.is_overdue),
-      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null
+      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null,
     })) as BookBorrowRecord[];
   }
 
@@ -200,7 +201,9 @@ export class RentalAnalyticsService {
    * Get all books currently borrowed by a specific member
    * Answers: "What books does Member Y currently have?"
    */
-  async getCurrentBooksByMemberId(memberId: string): Promise<BookBorrowRecord[]> {
+  async getCurrentBooksByMemberId(
+    memberId: string
+  ): Promise<BookBorrowRecord[]> {
     const query = `
       SELECT DISTINCT 
         b.*,
@@ -231,11 +234,11 @@ export class RentalAnalyticsService {
     `;
 
     const rows = await databaseConnection.all(query, [memberId]);
-    
+
     return rows.map((row: any) => ({
       ...row,
       is_overdue: Boolean(row.is_overdue),
-      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null
+      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null,
     })) as BookBorrowRecord[];
   }
 
@@ -243,11 +246,13 @@ export class RentalAnalyticsService {
    * Get comprehensive borrowing summary for a book
    * Answers: "What's the complete borrowing status for Book X?"
    */
-  async getCurrentBorrowerSummaryForBook(bookId: string): Promise<CurrentBorrowerSummary> {
+  async getCurrentBorrowerSummaryForBook(
+    bookId: string
+  ): Promise<CurrentBorrowerSummary> {
     // Get book details
     const bookQuery = `SELECT * FROM books WHERE id = ?`;
     const book = await databaseConnection.getOne(bookQuery, [bookId]);
-    
+
     if (!book) {
       throw new Error(`Book with ID ${bookId} not found`);
     }
@@ -272,7 +277,7 @@ export class RentalAnalyticsService {
       total_copies: (copyStats as any)?.total_copies || 0,
       available_copies: (copyStats as any)?.available_copies || 0,
       borrowed_copies: (copyStats as any)?.borrowed_copies || 0,
-      current_borrowers: currentBorrowers
+      current_borrowers: currentBorrowers,
     };
   }
 
@@ -280,14 +285,16 @@ export class RentalAnalyticsService {
    * Get all member-book associations with filters
    * Answers: "Show me all borrowing relationships"
    */
-  async getMemberBookAssociations(options: {
-    memberId?: string;
-    bookId?: string;
-    currentOnly?: boolean;
-    limit?: number;
-    offset?: number;
-  } = {}): Promise<MemberBookAssociation[]> {
-    let whereConditions: string[] = [];
+  async getMemberBookAssociations(
+    options: {
+      memberId?: string;
+      bookId?: string;
+      currentOnly?: boolean;
+      limit?: number;
+      offset?: number;
+    } = {}
+  ): Promise<MemberBookAssociation[]> {
+    const whereConditions: string[] = [];
     const params: any[] = [];
 
     if (options.memberId) {
@@ -305,9 +312,10 @@ export class RentalAnalyticsService {
       whereConditions.push("bt.status IN ('Active', 'Overdue')");
     }
 
-    const whereClause = whereConditions.length > 0 
-      ? `WHERE ${whereConditions.join(' AND ')}` 
-      : '';
+    const whereClause =
+      whereConditions.length > 0
+        ? `WHERE ${whereConditions.join(' AND ')}`
+        : '';
 
     const limitClause = options.limit ? `LIMIT ${options.limit}` : '';
     const offsetClause = options.offset ? `OFFSET ${options.offset}` : '';
@@ -338,11 +346,11 @@ export class RentalAnalyticsService {
     `;
 
     const rows = await databaseConnection.all(query, params);
-    
+
     return rows.map((row: any) => ({
       ...row,
       is_current: Boolean(row.is_current),
-      is_overdue: Boolean(row.is_overdue)
+      is_overdue: Boolean(row.is_overdue),
     })) as MemberBookAssociation[];
   }
 
@@ -364,7 +372,7 @@ export class RentalAnalyticsService {
     `;
 
     const stats = await databaseConnection.getOne(statsQuery, []);
-    
+
     return {
       total_transactions: (stats as any)?.total_transactions || 0,
       active_rentals: (stats as any)?.active_rentals || 0,
@@ -372,7 +380,9 @@ export class RentalAnalyticsService {
       overdue_rentals: (stats as any)?.overdue_rentals || 0,
       unique_borrowers: (stats as any)?.unique_borrowers || 0,
       unique_books_borrowed: (stats as any)?.unique_books_borrowed || 0,
-      avg_loan_duration_days: (stats as any)?.avg_loan_duration_days ? Math.round((stats as any).avg_loan_duration_days * 10) / 10 : 0
+      avg_loan_duration_days: (stats as any)?.avg_loan_duration_days
+        ? Math.round((stats as any).avg_loan_duration_days * 10) / 10
+        : 0,
     };
   }
 }
