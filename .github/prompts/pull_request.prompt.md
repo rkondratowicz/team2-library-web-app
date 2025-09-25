@@ -1,4 +1,5 @@
 ----
 mode: "agent"
 ----
-Define the task to achieve, including specific requirements, constraints, and success criteria.
+
+Fill out pull request template with an update of what has occured in this conversation so that when a pull request is created it is filled out with the relevant information.

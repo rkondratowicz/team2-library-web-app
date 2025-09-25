@@ -35,7 +35,7 @@ export class BookRepository {
 
   async createBook(book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
     const id = crypto.randomUUID();
-    await databaseConnection.execute(
+    const result = await databaseConnection.run(
       `INSERT INTO books (id, title, author, isbn, genre, publication_year, description) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -51,33 +51,26 @@ export class BookRepository {
 
     const createdBook = await this.getBookById(id);
     if (!createdBook) {
-      throw new Error('Failed to create book');
+      throw new Error('Failed to retrieve created book');
     }
     return createdBook;
   }
 
-  async updateBook(
-    id: string,
-    book: Omit<Book, 'id' | 'created_at'>
-  ): Promise<Book> {
-    await databaseConnection.execute(
-      `UPDATE books 
-       SET title = ?, author = ?, isbn = ?, genre = ?, publication_year = ?, description = ?
+  async updateBook(id: string, book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
+    const result = await databaseConnection.run(
+      `UPDATE books SET 
+       title = ?, author = ?, isbn = ?, genre = ?, publication_year = ?, description = ?
        WHERE id = ?`,
-      [
-        book.title,
-        book.author,
-        book.isbn,
-        book.genre,
-        book.publication_year,
-        book.description,
-        id,
-      ]
+      [book.title, book.author, book.isbn, book.genre, book.publication_year, book.description, id]
     );
-
+    
+    if (result.changes === 0) {
+      throw new Error('Book not found or no changes made');
+    }
+    
     const updatedBook = await this.getBookById(id);
     if (!updatedBook) {
-      throw new Error('Failed to update book');
+      throw new Error('Failed to retrieve updated book');
     }
     return updatedBook;
   }
@@ -87,7 +80,9 @@ export class BookRepository {
       'DELETE FROM books WHERE id = ?',
       [id]
     );
-    return result.changes !== undefined && result.changes > 0;
+    
+    // Check if any rows were affected (book was actually deleted)
+    return result.changes > 0;
   }
 }
 
