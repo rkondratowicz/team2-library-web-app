@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { databaseConnection } from './data-access/DatabaseConnection.js';
 import { bookController } from './presentation/controllers/BookController.js';
+import { transactionController } from './presentation/controllers/TransactionController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -45,6 +46,21 @@ app.post(
   bookController.addCopyToBook.bind(bookController)
 );
 app.delete('/api/copies/:id', bookController.deleteCopy.bind(bookController));
+
+// Transaction/Borrowing routes
+app.post('/api/transactions/borrow', transactionController.borrowBook.bind(transactionController));
+app.post('/api/transactions/:transactionId/return', transactionController.returnBook.bind(transactionController));
+app.get('/api/transactions/active', transactionController.getAllActiveTransactions.bind(transactionController));
+app.get('/api/transactions/overdue', transactionController.getOverdueTransactions.bind(transactionController));
+app.get('/api/transactions/stats', transactionController.getBorrowingStats.bind(transactionController));
+app.get('/api/transactions/:transactionId', transactionController.getTransactionDetails.bind(transactionController));
+
+// Member-related transaction routes  
+app.get('/api/members/:memberId/borrowing', transactionController.getMemberBorrowingSummary.bind(transactionController));
+app.get('/api/members/:memberId/can-borrow', transactionController.checkMemberBorrowingEligibility.bind(transactionController));
+
+// Quick borrow route for frontend convenience
+app.post('/api/copies/:copyId/borrow', transactionController.quickBorrowCopy.bind(transactionController));
 
 // Initialize database and start server
 async function startServer() {
