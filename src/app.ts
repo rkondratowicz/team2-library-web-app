@@ -26,20 +26,16 @@ app.get(
   bookController.getAllBooksWithCopies.bind(bookController)
 );
 app.get('/api/books/search', bookController.searchBooks.bind(bookController));
+app.get('/api/books/search/with-copies', bookController.searchBooksWithCopies.bind(bookController));
 app.post('/api/books', bookController.createBook.bind(bookController));
 app.get('/api/books/:id', bookController.getBookById.bind(bookController));
 app.put('/api/books/:id', bookController.updateBook.bind(bookController));
 app.delete('/api/books/:id', bookController.deleteBook.bind(bookController));
 
-// Copy management routes (for testing)
-app.get(
-  '/api/books/:id/with-copies',
-  bookController.getBookWithCopies.bind(bookController)
-);
-app.post(
-  '/api/books/:id/copies',
-  bookController.addCopyToBook.bind(bookController)
-);
+// Copy management routes
+app.get('/api/books/:id/with-copies', bookController.getBookWithCopies.bind(bookController));
+app.post('/api/books/:id/copies', bookController.addCopyToBook.bind(bookController));
+app.delete('/api/copies/:id', bookController.deleteCopy.bind(bookController));
 
 // Initialize database and start server
 async function startServer() {
