@@ -36,6 +36,21 @@ export class BookController {
       res.status(500).json({ error: 'Failed to search books' });
     }
   }
+
+  async createBook(req: Request, res: Response): Promise<void> {
+    try {
+      const bookData = req.body;
+      const newBook = await bookService.createBook(bookData);
+      res.status(201).json(newBook);
+    } catch (error) {
+      console.error('Error creating book:', error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'Failed to create book' });
+      }
+    }
+  }
 }
 
 export const bookController = new BookController();
