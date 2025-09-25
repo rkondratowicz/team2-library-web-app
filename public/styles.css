@@ -145,3 +145,101 @@ body {
 .table-responsive::-webkit-scrollbar-thumb:hover {
   background: #a8a8a8;
 }
+
+/* Inline book description rows */
+.description-row {
+  background-color: #f8f9fa;
+  border-left: 4px solid #3498db;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.3s ease-out;
+}
+
+.description-row.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.description-cell {
+  padding: 0 !important;
+  border: none;
+}
+
+.description-content {
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+  border-bottom: 1px solid #dee2e6;
+}
+
+.description-header {
+  margin-bottom: 1rem;
+}
+
+.description-title {
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 1.1em;
+  margin-bottom: 0.25rem;
+}
+
+.description-author {
+  margin-bottom: 0;
+  font-style: italic;
+}
+
+.description-text {
+  font-size: 0.95em;
+  line-height: 1.6;
+  color: #495057;
+  margin-bottom: 1rem;
+}
+
+.description-metadata {
+  background-color: rgba(52, 152, 219, 0.05);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  border: 1px solid rgba(52, 152, 219, 0.1);
+}
+
+.metadata-item {
+  margin-bottom: 0.5rem;
+  font-size: 0.9em;
+  color: #6c757d;
+}
+
+.metadata-item:last-child {
+  margin-bottom: 0;
+}
+
+.metadata-item strong {
+  color: #495057;
+}
+
+.description-close {
+  text-align: center;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+/* Clickable row styling */
+.book-row {
+  transition: background-color 0.2s ease;
+}
+
+.book-row:hover {
+  background-color: rgba(52, 152, 219, 0.12) !important;
+  cursor: pointer;
+}
+
+.book-row:hover .book-title {
+  color: #3498db;
+}
+
+.actions-cell {
+  pointer-events: auto;
+}
+
+.actions-cell button {
+  pointer-events: auto;
+}

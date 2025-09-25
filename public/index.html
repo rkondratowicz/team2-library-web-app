@@ -225,6 +225,8 @@
             books.forEach((book, index) => {
                 const row = document.createElement('tr');
                 row.className = 'book-row';
+                row.style.cursor = 'pointer';
+                row.setAttribute('data-book-id', book.id);
                 row.innerHTML = `
                     <td><span class="book-id">${book.id}</span></td>
                     <td class="book-title">${escapeHtml(book.title)}</td>
@@ -232,15 +234,23 @@
                     <td class="book-isbn">${book.isbn || 'N/A'}</td>
                     <td class="book-genre">${escapeHtml(book.genre || 'N/A')}</td>
                     <td class="book-year">${book.publication_year || 'N/A'}</td>
-                    <td>
-                        <button class="btn btn-primary btn-sm me-2" onclick="editBook('${book.id}')">
+                    <td class="actions-cell">
+                        <button class="btn btn-primary btn-sm me-2" onclick="event.stopPropagation(); editBook('${book.id}')">
                             ✏️ Edit
                         </button>
-                        <button class="btn btn-danger btn-sm" onclick="deleteBook('${book.id}', '${escapeHtml(book.title)}')">
+                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteBook('${book.id}', '${escapeHtml(book.title)}')">
                             🗑️ Delete
                         </button>
                     </td>
                 `;
+                
+                // Add click handler to toggle inline description (but not for actions column)
+                row.addEventListener('click', (e) => {
+                    if (!e.target.closest('.actions-cell')) {
+                        toggleInlineDescription(row, book);
+                    }
+                });
+                
                 tbody.appendChild(row);
             });
         }
@@ -268,6 +278,94 @@
             document.getElementById('author-sort').textContent = columnIndex === 2 ? (sortDirection[2] === 1 ? '↑' : '↓') : '↕️';
             document.getElementById('genre-sort').textContent = columnIndex === 4 ? (sortDirection[4] === 1 ? '↑' : '↓') : '↕️';
             document.getElementById('year-sort').textContent = columnIndex === 5 ? (sortDirection[5] === 1 ? '↑' : '↓') : '↕️';
+        }
+        
+        // Inline book description functionality
+        let currentExpandedRow = null;
+
+        function toggleInlineDescription(bookRow, book) {
+            // If this row is already expanded, collapse it
+            const existingDescRow = bookRow.nextElementSibling;
+            if (existingDescRow && existingDescRow.classList.contains('description-row')) {
+                existingDescRow.remove();
+                currentExpandedRow = null;
+                return;
+            }
+            
+            // If another row is expanded, collapse it first
+            if (currentExpandedRow) {
+                const prevDescRow = currentExpandedRow.nextElementSibling;
+                if (prevDescRow && prevDescRow.classList.contains('description-row')) {
+                    prevDescRow.remove();
+                }
+            }
+            
+            // Create and insert new description row
+            const descriptionRow = createDescriptionRow(book);
+            bookRow.insertAdjacentElement('afterend', descriptionRow);
+            currentExpandedRow = bookRow;
+            
+            // Animate the expansion
+            setTimeout(() => {
+                descriptionRow.classList.add('show');
+            }, 10);
+        }
+        
+        function createDescriptionRow(book) {
+            const row = document.createElement('tr');
+            row.className = 'description-row';
+            
+            const descriptionContent = book.description && book.description.trim() 
+                ? escapeHtml(book.description)
+                : '<em class="text-muted">No description available for this book.</em>';
+            
+            row.innerHTML = `
+                <td colspan="7" class="description-cell">
+                    <div class="description-content">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="description-header">
+                                    <h6 class="description-title">${escapeHtml(book.title)}</h6>
+                                    <p class="description-author text-muted mb-2">
+                                        <small>by ${escapeHtml(book.author)}</small>
+                                    </p>
+                                </div>
+                                <div class="description-text">
+                                    ${descriptionContent}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="description-metadata">
+                                    <div class="metadata-item">
+                                        <strong>Genre:</strong> ${escapeHtml(book.genre || 'N/A')}
+                                    </div>
+                                    <div class="metadata-item">
+                                        <strong>Year:</strong> ${book.publication_year || 'N/A'}
+                                    </div>
+                                    <div class="metadata-item">
+                                        <strong>ISBN:</strong> ${book.isbn || 'N/A'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="description-close">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="collapseDescription(this)">
+                                ↑ Close
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+        
+        function collapseDescription(button) {
+            const descRow = button.closest('.description-row');
+            if (descRow) {
+                descRow.remove();
+                currentExpandedRow = null;
+            }
         }
         
         // Add new book functionality
