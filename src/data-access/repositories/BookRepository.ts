@@ -35,7 +35,7 @@ export class BookRepository {
 
   async createBook(book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
     const id = crypto.randomUUID();
-    await databaseConnection.run(
+    await databaseConnection.execute(
       `INSERT INTO books (id, title, author, isbn, genre, publication_year, description) 
        VALUES (?, ?, ?, ?, ?, ?, ?)`,
       [
@@ -54,6 +54,40 @@ export class BookRepository {
       throw new Error('Failed to create book');
     }
     return createdBook;
+  }
+
+  async updateBook(
+    id: string,
+    book: Omit<Book, 'id' | 'created_at'>
+  ): Promise<Book> {
+    await databaseConnection.execute(
+      `UPDATE books 
+       SET title = ?, author = ?, isbn = ?, genre = ?, publication_year = ?, description = ?
+       WHERE id = ?`,
+      [
+        book.title,
+        book.author,
+        book.isbn,
+        book.genre,
+        book.publication_year,
+        book.description,
+        id,
+      ]
+    );
+
+    const updatedBook = await this.getBookById(id);
+    if (!updatedBook) {
+      throw new Error('Failed to update book');
+    }
+    return updatedBook;
+  }
+
+  async deleteBook(id: string): Promise<boolean> {
+    const result = await databaseConnection.run(
+      'DELETE FROM books WHERE id = ?',
+      [id]
+    );
+    return result.changes !== undefined && result.changes > 0;
   }
 }
 
