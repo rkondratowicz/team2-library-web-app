@@ -24,6 +24,7 @@ app.get('/api/books', bookController.getAllBooks.bind(bookController));
 app.get('/api/books/search', bookController.searchBooks.bind(bookController));
 app.post('/api/books', bookController.createBook.bind(bookController));
 app.get('/api/books/:id', bookController.getBookById.bind(bookController));
+app.put('/api/books/:id', bookController.updateBook.bind(bookController));
 app.delete('/api/books/:id', bookController.deleteBook.bind(bookController));
 
 // Initialize database and start server
