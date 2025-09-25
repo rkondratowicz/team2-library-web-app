@@ -43,6 +43,11 @@ export class BookService {
       }
     }
 
+    // Genre validation
+    if (bookData.genre && bookData.genre.trim().length > 32) {
+      throw new Error('Genre cannot exceed 32 characters');
+    }
+
     // Publication year validation
     if (bookData.publication_year !== undefined) {
       if (bookData.publication_year > 2025) {
@@ -91,6 +96,11 @@ export class BookService {
       if (duplicateISBN) {
         throw new Error('A book with this ISBN already exists');
       }
+    }
+
+    // Genre validation
+    if (bookData.genre && bookData.genre.trim().length > 32) {
+      throw new Error('Genre cannot exceed 32 characters');
     }
 
     // Publication year validation
