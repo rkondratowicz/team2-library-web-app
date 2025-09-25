@@ -4,8 +4,8 @@ import express from 'express';
 import { databaseConnection } from './data-access/DatabaseConnection.js';
 import { bookController } from './presentation/controllers/BookController.js';
 import { memberController } from './presentation/controllers/MemberController.js';
-import { transactionController } from './presentation/controllers/TransactionController.js';
 import { rentalController } from './presentation/controllers/RentalController.js';
+import { transactionController } from './presentation/controllers/TransactionController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -188,6 +188,9 @@ async function startServer() {
       );
       console.log(
         `Transactions API available at http://localhost:${PORT}/api/transactions`
+      );
+      console.log(
+        `Rentals API available at http://localhost:${PORT}/api/rentals`
       );
     });
   } catch (error) {
