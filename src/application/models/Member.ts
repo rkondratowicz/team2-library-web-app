@@ -1,13 +1,13 @@
-// Member data model and type definitions
+// Member data model and type definitions for UK library system
 
 export interface Member {
   id: number;
   member_id: string;
   first_name: string;
   last_name: string;
-  email?: string | null;
-  phone?: string | null;
-  address?: string | null;
+  email?: string | null; // UK email addresses (e.g., .co.uk domains)
+  phone?: string | null; // UK phone numbers (e.g., 01234 567890, 0207 123 4567)
+  address?: string | null; // UK addresses with postcodes (e.g., "SW1A 1AA", "M1 4BT")
   status: MemberStatus;
   registration_date: string; // ISO date string (YYYY-MM-DD)
   created_at: string; // ISO datetime string
