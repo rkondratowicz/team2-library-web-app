@@ -143,6 +143,13 @@ export class BookService {
   async getCopiesForBook(bookId: string) {
     return await bookRepository.getCopiesForBook(bookId);
   }
+
+  async deleteCopy(copyId: string): Promise<boolean> {
+    if (!copyId?.trim()) {
+      throw new Error('Copy ID is required');
+    }
+    return await bookRepository.deleteCopy(copyId);
+  }
 }
 
 export const bookService = new BookService();
