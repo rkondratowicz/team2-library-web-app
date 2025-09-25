@@ -1,12 +1,12 @@
-import { Request, Response } from 'express';
+import type { Request, Response } from 'express';
 import { databaseService } from '../services/database.service.js';
 
 export class BooksController {
-  async getAllBooks(req: Request, res: Response): Promise<void> {
+  async getAllBooks(_req: Request, res: Response): Promise<void> {
     try {
       const books = await databaseService.getAllBooks();
       res.json(books);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch books' });
     }
   }
@@ -19,7 +19,7 @@ export class BooksController {
         return;
       }
       res.json(book);
-    } catch (error) {
+    } catch (_error) {
       res.status(500).json({ error: 'Failed to fetch book' });
     }
   }

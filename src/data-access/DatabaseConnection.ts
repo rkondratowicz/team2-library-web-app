@@ -11,6 +11,11 @@ interface QueryResult {
   [key: string]: unknown;
 }
 
+interface RunResult {
+  lastID: number;
+  changes: number;
+}
+
 export class DatabaseConnection {
   private db: sqlite3.Database | null = null;
   private dbPath: string;
@@ -56,7 +61,7 @@ export class DatabaseConnection {
       const migrationPath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(migrationPath, 'utf-8');
 
-      await this.run(sql);
+      await this.execute(sql);
       console.log(`Executed migration: ${file}`);
     }
   }
@@ -70,7 +75,7 @@ export class DatabaseConnection {
       const booksCount = await this.get('SELECT COUNT(*) as count FROM books');
       if (booksCount.count === 0) {
         const sql = fs.readFileSync(booksScript, 'utf-8');
-        await this.run(sql);
+        await this.execute(sql);
         console.log('Sample books data populated');
       } else {
         console.log('Sample books data already exists, skipping population');
@@ -85,7 +90,7 @@ export class DatabaseConnection {
       );
       if (membersCount.count === 0) {
         const sql = fs.readFileSync(membersScript, 'utf-8');
-        await this.run(sql);
+        await this.execute(sql);
         console.log('Sample members data populated');
       } else {
         console.log('Sample members data already exists, skipping population');
@@ -93,18 +98,38 @@ export class DatabaseConnection {
     }
   }
 
-  async run(sql: string, params: unknown[] = []): Promise<{ changes: number; lastID: number }> {
+  async run(sql: string, params: unknown[] = []): Promise<RunResult> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
         return;
       }
 
-      this.db.run(sql, params, function(err) {
+      this.db.run(sql, params, function (err) {
         if (err) {
           reject(err);
         } else {
-          resolve({ changes: this.changes, lastID: this.lastID });
+          resolve({
+            lastID: this.lastID,
+            changes: this.changes,
+          });
+        }
+      });
+    });
+  }
+
+  async execute(sql: string, params: unknown[] = []): Promise<void> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error('Database not connected'));
+        return;
+      }
+
+      this.db.run(sql, params, (err) => {
+        if (err) {
+          reject(err);
+        } else {
+          resolve();
         }
       });
     });

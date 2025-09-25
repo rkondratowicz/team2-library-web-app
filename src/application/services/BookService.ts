@@ -62,7 +62,10 @@ export class BookService {
     return await bookRepository.createBook(bookData);
   }
 
-  async updateBook(id: string, bookData: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
+  async updateBook(
+    id: string,
+    bookData: Omit<Book, 'id' | 'created_at'>
+  ): Promise<Book> {
     if (!id?.trim()) {
       throw new Error('Book ID is required');
     }
@@ -87,12 +90,14 @@ export class BookService {
       if (!/^\d{10,13}$/.test(isbn)) {
         throw new Error('ISBN must be 10-13 digits only');
       }
-      
+
       // Check for duplicate ISBN (excluding the current book)
       const existingBooks = await bookRepository.getAllBooks();
-      const duplicateISBN = existingBooks.find(book => 
-        book.id !== id && // Exclude current book
-        book.isbn && book.isbn.replace(/[-\s]/g, '') === isbn
+      const duplicateISBN = existingBooks.find(
+        (book) =>
+          book.id !== id && // Exclude current book
+          book.isbn &&
+          book.isbn.replace(/[-\s]/g, '') === isbn
       );
       if (duplicateISBN) {
         throw new Error('A book with this ISBN already exists');
@@ -109,7 +114,8 @@ export class BookService {
       if (bookData.publication_year > 2025) {
         throw new Error('Publication year cannot be beyond 2025');
       }
-      if (bookData.publication_year < -3000) { // Allow ancient texts like Homer
+      if (bookData.publication_year < -3000) {
+        // Allow ancient texts like Homer
         throw new Error('Publication year too old');
       }
     }
