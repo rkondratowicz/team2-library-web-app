@@ -122,7 +122,7 @@ export class BookRepository {
   async createCopy(copyData: CreateCopyRequest): Promise<BookCopy> {
     const copyId = crypto.randomUUID();
 
-    const result = await databaseConnection.run(
+    await databaseConnection.run(
       `INSERT INTO book_copies (id, book_id, copy_number, status, condition_notes, acquisition_date)
        VALUES (?, ?, ?, ?, ?, ?)`,
       [
