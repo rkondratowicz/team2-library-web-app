@@ -28,7 +28,7 @@ export class BookController {
 
   async searchBooks(req: Request, res: Response): Promise<void> {
     try {
-      const searchTerm = req.query.q as string || '';
+      const searchTerm = (req.query.q as string) || '';
       const books = await bookService.searchBooks(searchTerm);
       res.json(books);
     } catch (error) {

@@ -1,9 +1,9 @@
 import { bookRepository } from '../../data-access/repositories/BookRepository.js';
-import type { 
-  Book, 
-  CreateBookRequest, 
-  UpdateBookRequest, 
-  BookSearchOptions 
+import type {
+  Book,
+  BookSearchOptions,
+  CreateBookRequest,
+  UpdateBookRequest,
 } from '../models/Book.js';
 
 export class BookService {
@@ -46,8 +46,13 @@ export class BookService {
     // Validate publication year if provided
     if (bookData.publication_year !== undefined) {
       const currentYear = new Date().getFullYear();
-      if (bookData.publication_year < 1800 || bookData.publication_year > currentYear + 1) {
-        throw new Error(`Publication year must be between 1800 and ${currentYear + 1}`);
+      if (
+        bookData.publication_year < 1800 ||
+        bookData.publication_year > currentYear + 1
+      ) {
+        throw new Error(
+          `Publication year must be between 1800 and ${currentYear + 1}`
+        );
       }
     }
 
@@ -63,7 +68,10 @@ export class BookService {
   }
 
   // Update book
-  async updateBook(id: string, updates: UpdateBookRequest): Promise<Book | null> {
+  async updateBook(
+    id: string,
+    updates: UpdateBookRequest
+  ): Promise<Book | null> {
     if (!id || id.trim() === '') {
       throw new Error('Book ID is required');
     }
@@ -75,23 +83,38 @@ export class BookService {
     }
 
     // Validate updates
-    if (updates.title !== undefined && (!updates.title || updates.title.trim() === '')) {
+    if (
+      updates.title !== undefined &&
+      (!updates.title || updates.title.trim() === '')
+    ) {
       throw new Error('Book title cannot be empty');
     }
-    if (updates.author !== undefined && (!updates.author || updates.author.trim() === '')) {
+    if (
+      updates.author !== undefined &&
+      (!updates.author || updates.author.trim() === '')
+    ) {
       throw new Error('Book author cannot be empty');
     }
 
     // Validate ISBN if being updated
-    if (updates.isbn !== undefined && updates.isbn && !this.isValidISBN(updates.isbn)) {
+    if (
+      updates.isbn !== undefined &&
+      updates.isbn &&
+      !this.isValidISBN(updates.isbn)
+    ) {
       throw new Error('Invalid ISBN format');
     }
 
     // Validate publication year if being updated
     if (updates.publication_year !== undefined) {
       const currentYear = new Date().getFullYear();
-      if (updates.publication_year < 1800 || updates.publication_year > currentYear + 1) {
-        throw new Error(`Publication year must be between 1800 and ${currentYear + 1}`);
+      if (
+        updates.publication_year < 1800 ||
+        updates.publication_year > currentYear + 1
+      ) {
+        throw new Error(
+          `Publication year must be between 1800 and ${currentYear + 1}`
+        );
       }
     }
 
@@ -122,7 +145,11 @@ export class BookService {
   }
 
   // Search books
-  async searchBooks(query: string, limit?: number, offset?: number): Promise<Book[]> {
+  async searchBooks(
+    query: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Book[]> {
     if (!query || query.trim() === '') {
       return await this.getAllBooks(limit, offset);
     }
@@ -135,7 +162,11 @@ export class BookService {
   }
 
   // Get books by genre
-  async getBooksByGenre(genre: string, limit?: number, offset?: number): Promise<Book[]> {
+  async getBooksByGenre(
+    genre: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Book[]> {
     if (!genre || genre.trim() === '') {
       throw new Error('Genre is required');
     }
@@ -164,7 +195,7 @@ export class BookService {
     const [total, byGenre, recent] = await Promise.all([
       bookRepository.count(),
       bookRepository.countByGenre(),
-      bookRepository.getRecentBooks(5)
+      bookRepository.getRecentBooks(5),
     ]);
 
     return { total, byGenre, recent };
@@ -179,14 +210,14 @@ export class BookService {
   private isValidISBN(isbn: string): boolean {
     // Remove hyphens and spaces
     const cleanISBN = isbn.replace(/[-\s]/g, '');
-    
+
     // Check if it's ISBN-10 or ISBN-13
     if (cleanISBN.length === 10) {
       return this.isValidISBN10(cleanISBN);
     } else if (cleanISBN.length === 13) {
       return this.isValidISBN13(cleanISBN);
     }
-    
+
     return false;
   }
 

@@ -1,28 +1,28 @@
-import type { 
-  Book, 
-  CreateBookRequest, 
-  UpdateBookRequest, 
-  BookSearchOptions 
+import { randomUUID } from 'crypto';
+import type {
+  Book,
+  BookSearchOptions,
+  CreateBookRequest,
+  UpdateBookRequest,
 } from '../../application/models/Book.js';
 import { databaseConnection } from '../DatabaseConnection.js';
-import { randomUUID } from 'crypto';
 
 export class BookRepository {
   // Get all books with optional pagination
   async getAllBooks(limit?: number, offset?: number): Promise<Book[]> {
     let sql = 'SELECT * FROM books ORDER BY created_at DESC';
     const params: unknown[] = [];
-    
+
     if (limit !== undefined) {
       sql += ' LIMIT ?';
       params.push(limit);
-      
+
       if (offset !== undefined) {
         sql += ' OFFSET ?';
         params.push(offset);
       }
     }
-    
+
     const rows = await databaseConnection.all(sql, params);
     return rows as Book[];
   }
@@ -48,12 +48,12 @@ export class BookRepository {
   // Create new book
   async create(bookData: CreateBookRequest): Promise<Book> {
     const bookId = randomUUID();
-    
+
     const sql = `
       INSERT INTO books (id, title, author, isbn, genre, publication_year, description)
       VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
-    
+
     const params = [
       bookId,
       bookData.title,
@@ -61,17 +61,17 @@ export class BookRepository {
       bookData.isbn || null,
       bookData.genre || null,
       bookData.publication_year || null,
-      bookData.description || null
+      bookData.description || null,
     ];
-    
+
     try {
       await databaseConnection.run(sql, params);
-      
+
       const newBook = await this.getBookById(bookId);
       if (!newBook) {
         throw new Error('Failed to retrieve created book');
       }
-      
+
       return newBook;
     } catch (error: any) {
       if (error.message.includes('UNIQUE constraint failed: books.isbn')) {
@@ -85,7 +85,7 @@ export class BookRepository {
   async update(id: string, updates: UpdateBookRequest): Promise<Book | null> {
     const fields = [];
     const values = [];
-    
+
     if (updates.title !== undefined) {
       fields.push('title = ?');
       values.push(updates.title);
@@ -110,18 +110,18 @@ export class BookRepository {
       fields.push('description = ?');
       values.push(updates.description);
     }
-    
+
     if (fields.length === 0) {
       // No updates provided
       return this.getBookById(id);
     }
-    
+
     // Add updated_at timestamp
     fields.push('updated_at = CURRENT_TIMESTAMP');
     values.push(id);
-    
+
     const sql = `UPDATE books SET ${fields.join(', ')} WHERE id = ?`;
-    
+
     try {
       await databaseConnection.run(sql, values);
       return this.getBookById(id);
@@ -136,7 +136,7 @@ export class BookRepository {
   // Delete book
   async delete(id: string): Promise<boolean> {
     const sql = 'DELETE FROM books WHERE id = ?';
-    
+
     try {
       await databaseConnection.run(sql, [id]);
       return true;
@@ -146,7 +146,11 @@ export class BookRepository {
   }
 
   // Search books
-  async search(query: string, limit?: number, offset?: number): Promise<Book[]> {
+  async search(
+    query: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Book[]> {
     const searchPattern = `%${query}%`;
     let sql = `
       SELECT * FROM books 
@@ -160,22 +164,27 @@ export class BookRepository {
         END,
         created_at DESC
     `;
-    
+
     const params: unknown[] = [
-      searchPattern, searchPattern, searchPattern, searchPattern,
-      searchPattern, searchPattern, searchPattern
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      searchPattern,
+      searchPattern,
     ];
-    
+
     if (limit !== undefined) {
       sql += ' LIMIT ?';
       params.push(limit);
-      
+
       if (offset !== undefined) {
         sql += ' OFFSET ?';
         params.push(offset);
       }
     }
-    
+
     const rows = await databaseConnection.all(sql, params);
     return rows as Book[];
   }
@@ -184,60 +193,67 @@ export class BookRepository {
   async advancedSearch(options: BookSearchOptions): Promise<Book[]> {
     const conditions = [];
     const params: unknown[] = [];
-    
+
     if (options.query) {
-      conditions.push('(title LIKE ? OR author LIKE ? OR genre LIKE ? OR description LIKE ?)');
+      conditions.push(
+        '(title LIKE ? OR author LIKE ? OR genre LIKE ? OR description LIKE ?)'
+      );
       const searchPattern = `%${options.query}%`;
       params.push(searchPattern, searchPattern, searchPattern, searchPattern);
     }
-    
+
     if (options.genre) {
       conditions.push('genre = ?');
       params.push(options.genre);
     }
-    
+
     if (options.publicationYearFrom) {
       conditions.push('publication_year >= ?');
       params.push(options.publicationYearFrom);
     }
-    
+
     if (options.publicationYearTo) {
       conditions.push('publication_year <= ?');
       params.push(options.publicationYearTo);
     }
-    
-    const whereClause = conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
+
+    const whereClause =
+      conditions.length > 0 ? `WHERE ${conditions.join(' AND ')}` : '';
     const limit = options.limit || 50;
     const offset = options.offset || 0;
-    
+
     const sql = `
       SELECT * FROM books 
       ${whereClause}
       ORDER BY created_at DESC
       LIMIT ? OFFSET ?
     `;
-    
+
     params.push(limit, offset);
-    
+
     const rows = await databaseConnection.all(sql, params);
     return rows as Book[];
   }
 
   // Get books by genre
-  async getBooksByGenre(genre: string, limit?: number, offset?: number): Promise<Book[]> {
+  async getBooksByGenre(
+    genre: string,
+    limit?: number,
+    offset?: number
+  ): Promise<Book[]> {
     let sql = 'SELECT * FROM books WHERE genre = ? ORDER BY created_at DESC';
     const params: unknown[] = [genre];
-    
+
     if (limit !== undefined) {
       sql += ' LIMIT ?';
       params.push(limit);
-      
+
       if (offset !== undefined) {
         sql += ' OFFSET ?';
         params.push(offset);
       }
     }
-    
+
     const rows = await databaseConnection.all(sql, params);
     return rows as Book[];
   }
@@ -249,7 +265,7 @@ export class BookRepository {
       WHERE publication_year BETWEEN ? AND ?
       ORDER BY publication_year DESC, created_at DESC
     `;
-    
+
     const rows = await databaseConnection.all(sql, [fromYear, toYear]);
     return rows as Book[];
   }
@@ -264,7 +280,9 @@ export class BookRepository {
 
   // Count books
   async count(): Promise<number> {
-    const result = await databaseConnection.get('SELECT COUNT(*) as count FROM books');
+    const result = await databaseConnection.get(
+      'SELECT COUNT(*) as count FROM books'
+    );
     return result.count as number;
   }
 
