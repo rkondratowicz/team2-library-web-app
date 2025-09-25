@@ -128,6 +128,12 @@ app.post(
   transactionController.quickBorrowCopy.bind(transactionController)
 );
 
+// Alternative quick borrow route that matches frontend expectations
+app.post(
+  '/api/transactions/quickBorrowCopy',
+  transactionController.quickBorrowCopyByBookId.bind(transactionController)
+);
+
 // Initialize database and start server
 async function startServer() {
   try {
