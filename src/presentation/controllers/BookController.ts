@@ -154,6 +154,54 @@ export class BookController {
       res.status(500).json({ error: 'Failed to fetch books with copies' });
     }
   }
+
+  async searchBooksWithCopies(req: Request, res: Response): Promise<void> {
+    try {
+      const searchTerm = req.query.q as string;
+      const books = await bookService.searchBooks(searchTerm || '');
+      const booksWithCopies = [];
+
+      for (const book of books) {
+        const copies = await bookService.getCopiesForBook(book.id);
+        const availableCopies = copies.filter(copy => copy.status === 'Available').length;
+        
+        booksWithCopies.push({
+          ...book,
+          totalCopies: copies.length,
+          availableCopies: availableCopies
+        });
+      }
+
+      res.json(booksWithCopies);
+    } catch (error) {
+      console.error('Error searching books with copies:', error);
+      res.status(500).json({ error: 'Failed to search books with copies' });
+    }
+  }
+
+  async deleteCopy(req: Request, res: Response): Promise<void> {
+    try {
+      const copyId = req.params.id;
+      if (!copyId) {
+        res.status(400).json({ error: 'Copy ID is required' });
+        return;
+      }
+
+      const success = await bookService.deleteCopy(copyId);
+      if (success) {
+        res.json({ message: 'Copy deleted successfully' });
+      } else {
+        res.status(404).json({ error: 'Copy not found' });
+      }
+    } catch (error) {
+      console.error('Error deleting copy:', error);
+      if (error instanceof Error) {
+        res.status(400).json({ error: error.message });
+      } else {
+        res.status(500).json({ error: 'Failed to delete copy' });
+      }
+    }
+  }
 }
 
 export const bookController = new BookController();
