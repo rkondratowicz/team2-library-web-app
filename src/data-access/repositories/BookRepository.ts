@@ -310,6 +310,21 @@ export class BookRepository {
     );
     return rows as Book[];
   }
+
+  async createBook(book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
+    const id = crypto.randomUUID();
+    await databaseConnection.run(
+      `INSERT INTO books (id, title, author, isbn, genre, publication_year, description) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      [id, book.title, book.author, book.isbn, book.genre, book.publication_year, book.description]
+    );
+    
+    const createdBook = await this.getBookById(id);
+    if (!createdBook) {
+      throw new Error('Failed to create book');
+    }
+    return createdBook;
+  }
 }
 
 export const bookRepository = new BookRepository();
