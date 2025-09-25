@@ -94,9 +94,12 @@ export class BookController {
   // Copy management methods for testing
   async getBookWithCopies(req: Request, res: Response): Promise<void> {
     try {
-      const bookRepository = await import('../../data-access/repositories/BookRepository.js');
-      const bookWithCopies = await bookRepository.bookRepository.getBookWithCopies(req.params.id);
-      
+      const bookRepository = await import(
+        '../../data-access/repositories/BookRepository.js'
+      );
+      const bookWithCopies =
+        await bookRepository.bookRepository.getBookWithCopies(req.params.id);
+
       if (bookWithCopies) {
         res.json(bookWithCopies);
       } else {
@@ -110,14 +113,16 @@ export class BookController {
 
   async addCopyToBook(req: Request, res: Response): Promise<void> {
     try {
-      const bookRepository = await import('../../data-access/repositories/BookRepository.js');
+      const bookRepository = await import(
+        '../../data-access/repositories/BookRepository.js'
+      );
       const { copy_number, status, condition_notes } = req.body;
-      
+
       const copyData = {
         book_id: req.params.id,
         copy_number: copy_number || '1',
         status: status || 'Available',
-        condition_notes
+        condition_notes,
       };
 
       const newCopy = await bookRepository.bookRepository.createCopy(copyData);
@@ -139,12 +144,14 @@ export class BookController {
 
       for (const book of books) {
         const copies = await bookService.getCopiesForBook(book.id);
-        const availableCopies = copies.filter(copy => copy.status === 'Available').length;
-        
+        const availableCopies = copies.filter(
+          (copy) => copy.status === 'Available'
+        ).length;
+
         booksWithCopies.push({
           ...book,
           totalCopies: copies.length,
-          availableCopies: availableCopies
+          availableCopies: availableCopies,
         });
       }
 

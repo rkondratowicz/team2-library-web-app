@@ -1,5 +1,10 @@
 import type { Book } from '../../application/models/Book.js';
-import type { BookCopy, CreateCopyRequest, UpdateCopyRequest, BookWithCopies } from '../../application/models/BookCopy.js';
+import type {
+  BookCopy,
+  BookWithCopies,
+  CreateCopyRequest,
+  UpdateCopyRequest,
+} from '../../application/models/BookCopy.js';
 import { databaseConnection } from '../DatabaseConnection.js';
 
 export class BookRepository {
@@ -116,7 +121,7 @@ export class BookRepository {
 
   async createCopy(copyData: CreateCopyRequest): Promise<BookCopy> {
     const copyId = crypto.randomUUID();
-    
+
     const result = await databaseConnection.run(
       `INSERT INTO book_copies (id, book_id, copy_number, status, condition_notes, acquisition_date)
        VALUES (?, ?, ?, ?, ?, ?)`,
@@ -126,7 +131,7 @@ export class BookRepository {
         copyData.copy_number,
         copyData.status || 'Available',
         copyData.condition_notes || null,
-        copyData.acquisition_date || new Date().toISOString().split('T')[0]
+        copyData.acquisition_date || new Date().toISOString().split('T')[0],
       ]
     );
 
@@ -137,7 +142,10 @@ export class BookRepository {
     return newCopy;
   }
 
-  async updateCopy(copyId: string, updateData: UpdateCopyRequest): Promise<BookCopy> {
+  async updateCopy(
+    copyId: string,
+    updateData: UpdateCopyRequest
+  ): Promise<BookCopy> {
     const existingCopy = await this.getCopyById(copyId);
     if (!existingCopy) {
       throw new Error('Copy not found');
@@ -152,7 +160,7 @@ export class BookRepository {
         updateData.status ?? existingCopy.status,
         updateData.condition_notes ?? existingCopy.condition_notes,
         updateData.acquisition_date ?? existingCopy.acquisition_date,
-        copyId
+        copyId,
       ]
     );
 
@@ -168,7 +176,7 @@ export class BookRepository {
       'DELETE FROM book_copies WHERE id = ?',
       [copyId]
     );
-    
+
     return result.changes > 0;
   }
 
@@ -179,7 +187,9 @@ export class BookRepository {
     }
 
     const copies = await this.getCopiesForBook(bookId);
-    const availableCopies = copies.filter(copy => copy.status === 'Available').length;
+    const availableCopies = copies.filter(
+      (copy) => copy.status === 'Available'
+    ).length;
 
     return {
       id: book.id,
@@ -192,7 +202,7 @@ export class BookRepository {
       created_at: book.created_at || new Date().toISOString(),
       copies,
       total_copies: copies.length,
-      available_copies: availableCopies
+      available_copies: availableCopies,
     };
   }
 }
