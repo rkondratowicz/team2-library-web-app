@@ -2,21 +2,12 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sqlite3 from 'sqlite3';
+import type { Book, QueryResult } from '../types/database.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-interface QueryResult {
-  count: number;
-  [key: string]: unknown;
-}
-
-interface RunResult {
-  lastID: number;
-  changes: number;
-}
-
-export class DatabaseConnection {
+class DatabaseService {
   private db: sqlite3.Database | null = null;
   private dbPath: string;
 
@@ -38,14 +29,7 @@ export class DatabaseConnection {
   }
 
   async runMigrations(): Promise<void> {
-    const migrationsDir = path.join(
-      __dirname,
-      '..',
-      '..',
-      'src',
-      'data-access',
-      'migrations'
-    );
+    const migrationsDir = path.join(__dirname, '..', '..', 'migrations');
 
     if (!fs.existsSync(migrationsDir)) {
       console.log('No migrations directory found');
@@ -61,71 +45,73 @@ export class DatabaseConnection {
       const migrationPath = path.join(migrationsDir, file);
       const sql = fs.readFileSync(migrationPath, 'utf-8');
 
-      await this.execute(sql);
+      await this.run(sql);
       console.log(`Executed migration: ${file}`);
     }
   }
 
   async populateSampleData(): Promise<void> {
     const scriptsDir = path.join(__dirname, '..', '..', 'scripts');
+    const populateScript = path.join(scriptsDir, 'populate-sample-books.sql');
 
-    // Populate books sample data
-    const booksScript = path.join(scriptsDir, 'populate-sample-books.sql');
-    if (fs.existsSync(booksScript)) {
-      const booksCount = await this.get('SELECT COUNT(*) as count FROM books');
-      if (booksCount.count === 0) {
-        const sql = fs.readFileSync(booksScript, 'utf-8');
-        await this.execute(sql);
-        console.log('Sample books data populated');
+    if (fs.existsSync(populateScript)) {
+      // Check if data already exists
+      const count = await this.get('SELECT COUNT(*) as count FROM books');
+      if (count.count === 0) {
+        const sql = fs.readFileSync(populateScript, 'utf-8');
+        await this.run(sql);
+        console.log('Sample data populated');
       } else {
-        console.log('Sample books data already exists, skipping population');
-      }
-    }
-
-    // Populate members sample data
-    const membersScript = path.join(scriptsDir, 'populate-sample-members.sql');
-    if (fs.existsSync(membersScript)) {
-      const membersCount = await this.get(
-        'SELECT COUNT(*) as count FROM members'
-      );
-      if (membersCount.count === 0) {
-        const sql = fs.readFileSync(membersScript, 'utf-8');
-        await this.execute(sql);
-        console.log('Sample members data populated');
-      } else {
-        console.log('Sample members data already exists, skipping population');
+        console.log('Sample data already exists, skipping population');
       }
     }
   }
 
-  async run(sql: string, params: unknown[] = []): Promise<RunResult> {
+  async getAllBooks(): Promise<Book[]> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
         return;
       }
 
-      this.db.run(sql, params, function (err) {
+      this.db.all(
+        'SELECT * FROM books ORDER BY created_at DESC',
+        (err, rows) => {
+          if (err) {
+            reject(err);
+          } else {
+            resolve(rows as Book[]);
+          }
+        }
+      );
+    });
+  }
+
+  async getBookById(id: string): Promise<Book | null> {
+    return new Promise((resolve, reject) => {
+      if (!this.db) {
+        reject(new Error('Database not connected'));
+        return;
+      }
+
+      this.db.get('SELECT * FROM books WHERE id = ?', [id], (err, row) => {
         if (err) {
           reject(err);
         } else {
-          resolve({
-            lastID: this.lastID,
-            changes: this.changes,
-          });
+          resolve((row as Book) || null);
         }
       });
     });
   }
 
-  async execute(sql: string, params: unknown[] = []): Promise<void> {
+  private async run(sql: string): Promise<void> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
         return;
       }
 
-      this.db.run(sql, params, (err) => {
+      this.db.run(sql, (err) => {
         if (err) {
           reject(err);
         } else {
@@ -135,7 +121,7 @@ export class DatabaseConnection {
     });
   }
 
-  async get(sql: string): Promise<QueryResult> {
+  private async get(sql: string): Promise<QueryResult> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
@@ -147,40 +133,6 @@ export class DatabaseConnection {
           reject(err);
         } else {
           resolve(row as QueryResult);
-        }
-      });
-    });
-  }
-
-  async all(sql: string, params: unknown[] = []): Promise<unknown[]> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) {
-        reject(new Error('Database not connected'));
-        return;
-      }
-
-      this.db.all(sql, params, (err, rows) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(rows);
-        }
-      });
-    });
-  }
-
-  async getOne(sql: string, params: unknown[] = []): Promise<unknown | null> {
-    return new Promise((resolve, reject) => {
-      if (!this.db) {
-        reject(new Error('Database not connected'));
-        return;
-      }
-
-      this.db.get(sql, params, (err, row) => {
-        if (err) {
-          reject(err);
-        } else {
-          resolve(row || null);
         }
       });
     });
@@ -205,4 +157,4 @@ export class DatabaseConnection {
   }
 }
 
-export const databaseConnection = new DatabaseConnection();
+export const databaseService = new DatabaseService();
