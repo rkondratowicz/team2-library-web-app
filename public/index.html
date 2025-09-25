@@ -12,7 +12,23 @@
     <link href="styles.css" rel="stylesheet">
 </head>
 <body>
-    <div class="container-fluid">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-book-fill"></i> Library System
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link active" href="/">
+                    <i class="bi bi-book"></i> Books
+                </a>
+                <a class="nav-link" href="/members.html">
+                    <i class="bi bi-people"></i> Members
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
         <div class="row justify-content-center">
             <div class="col-lg-10">
                 <!-- Header -->
@@ -89,15 +105,7 @@
                 <div class="card books-table-card">
                     <div class="card-header d-flex justify-content-between align-items-center">
                         <h5 class="mb-0">📖 Books Collection</h5>
-                        <div class="d-flex gap-2">
-                            <button class="btn btn-outline-info btn-sm" onclick="viewActiveBorrowings()" title="View Active Borrowings">
-                                <i class="bi bi-list-check"></i> Active Borrowings
-                            </button>
-                            <button class="btn btn-outline-success btn-sm" onclick="returnBooks()" title="Return Borrowed Books">
-                                <i class="bi bi-arrow-return-left"></i> Return Books
-                            </button>
-                            <input type="text" class="form-control" id="search-books" placeholder="Search books..." style="max-width: 250px;">
-                        </div>
+                        <input type="text" class="form-control" id="search-books" placeholder="Search books..." style="max-width: 250px;">
                     </div>
                     <div class="card-body p-0">
                         <div class="table-responsive">
@@ -256,11 +264,6 @@
                             <button class="btn btn-outline-success btn-sm" onclick="event.stopPropagation(); addCopy('${book.id}', '${escapeHtml(book.title)}')" title="Add Copy">
                                 <i class="bi bi-plus-circle"></i> Copy
                             </button>
-                            ${book.availableCopies > 0 ? 
-                                `<button class="btn btn-outline-warning btn-sm" onclick="event.stopPropagation(); borrowBook('${book.id}', '${escapeHtml(book.title)}', ${book.availableCopies})" title="Borrow Available Copy">
-                                    <i class="bi bi-book"></i> Borrow
-                                </button>` : ''
-                            }
                             <button class="btn btn-outline-primary btn-sm" onclick="event.stopPropagation(); editBook('${book.id}')" title="Edit Book">
                                 <i class="bi bi-pencil"></i> Edit
                             </button>
@@ -614,195 +617,6 @@
             } catch (error) {
                 console.error('Error adding copy:', error);
                 alert(`Error adding copy: ${error.message}`);
-            }
-        }
-
-        // Borrow book functionality - for testing the borrowing system
-        async function borrowBook(bookId, bookTitle, availableCopies) {
-            // Use existing sample member from the database for testing
-            const testMemberId = 'MEM-2024-001'; // Using existing sample member
-
-            try {
-                // First, get an available copy
-                const response = await fetch(`/api/books/${bookId}/with-copies`);
-                if (!response.ok) {
-                    throw new Error('Failed to get book copies');
-                }
-                
-                const bookData = await response.json();
-                const availableCopy = bookData.copies.find(copy => copy.status === 'Available');
-                
-                if (!availableCopy) {
-                    alert('No available copies found to borrow!');
-                    return;
-                }
-
-                // Confirm borrowing
-                const confirmBorrow = confirm(`Borrow "${bookTitle}"?\n\nCopy: #${availableCopy.copy_number}\nDue in: 14 days\nTest Member ID: ${testMemberId}`);
-                if (!confirmBorrow) return;
-
-                // Make the borrow request
-                const borrowResponse = await fetch(`/api/copies/${availableCopy.id}/borrow`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        member_id: testMemberId
-                    })
-                });
-
-                if (!borrowResponse.ok) {
-                    const error = await borrowResponse.json();
-                    throw new Error(error.error || 'Failed to borrow book');
-                }
-
-                const result = await borrowResponse.json();
-
-                // Reload the books to show updated copy counts
-                loadBooks();
-                
-                alert(`Success! Borrowed "${bookTitle}" copy #${availableCopy.copy_number}\n\nDue Date: ${new Date(Date.now() + 14*24*60*60*1000).toLocaleDateString()}\nTransaction ID: ${result.transaction.id.substring(0,8)}...`);
-
-            } catch (error) {
-                console.error('Error borrowing book:', error);
-                alert(`Error borrowing book: ${error.message}`);
-            }
-        }
-
-        // View active borrowings functionality - for testing and monitoring
-        async function viewActiveBorrowings() {
-            try {
-                const response = await fetch('/api/transactions/active');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch active borrowings');
-                }
-                
-                const transactions = await response.json();
-                
-                if (transactions.length === 0) {
-                    alert('No active borrowings found.\n\nTry borrowing a book first by clicking the "📖 Borrow" button next to any book with available copies!');
-                    return;
-                }
-
-                // Format the borrowings info
-                let borrowingsInfo = `📚 ACTIVE BORROWINGS (${transactions.length})\n\n`;
-                
-                transactions.forEach((t, index) => {
-                    const borrowDate = new Date(t.borrow_date).toLocaleDateString();
-                    const dueDate = new Date(t.due_date).toLocaleDateString();
-                    const isOverdue = new Date(t.due_date) < new Date();
-                    
-                    borrowingsInfo += `${index + 1}. "${t.book_title}" by ${t.book_author}\n`;
-                    borrowingsInfo += `   Copy: #${t.copy_number}\n`;
-                    borrowingsInfo += `   Member: ${t.member_name}\n`;
-                    borrowingsInfo += `   Borrowed: ${borrowDate}\n`;
-                    borrowingsInfo += `   Due: ${dueDate}${isOverdue ? ' ⚠️ OVERDUE' : ''}\n`;
-                    borrowingsInfo += `   Status: ${t.status}\n\n`;
-                });
-
-                // Show stats
-                const statsResponse = await fetch('/api/transactions/stats');
-                if (statsResponse.ok) {
-                    const stats = await statsResponse.json();
-                    borrowingsInfo += `📊 LIBRARY STATS:\n`;
-                    borrowingsInfo += `• Total Active Borrows: ${stats.total_active_borrows}\n`;
-                    borrowingsInfo += `• Overdue Books: ${stats.overdue_count}\n`;
-                    borrowingsInfo += `• Active Members: ${stats.members_with_active_borrows}\n`;
-                }
-
-                alert(borrowingsInfo);
-
-            } catch (error) {
-                console.error('Error fetching active borrowings:', error);
-                alert(`Error fetching active borrowings: ${error.message}`);
-            }
-        }
-
-        // Return books functionality - for testing the return system
-        async function returnBooks() {
-            try {
-                const response = await fetch('/api/transactions/active');
-                if (!response.ok) {
-                    throw new Error('Failed to fetch active borrowings');
-                }
-                
-                const transactions = await response.json();
-                
-                if (transactions.length === 0) {
-                    alert('No books are currently borrowed.\n\nTry borrowing a book first by clicking the "📖 Borrow" button!');
-                    return;
-                }
-
-                // Create a list for the user to choose from
-                let returnList = `📚 SELECT BOOK TO RETURN:\n\n`;
-                
-                transactions.forEach((t, index) => {
-                    const borrowDate = new Date(t.borrow_date).toLocaleDateString();
-                    const dueDate = new Date(t.due_date).toLocaleDateString();
-                    const isOverdue = new Date(t.due_date) < new Date();
-                    
-                    returnList += `${index + 1}. "${t.book_title}" by ${t.book_author}\n`;
-                    returnList += `   Copy: #${t.copy_number}\n`;
-                    returnList += `   Borrowed: ${borrowDate}\n`;
-                    returnList += `   Due: ${dueDate}${isOverdue ? ' ⚠️ OVERDUE' : ''}\n\n`;
-                });
-
-                returnList += `Enter the number (1-${transactions.length}) of the book to return:`;
-
-                const choice = prompt(returnList);
-                if (!choice) return;
-
-                const bookIndex = parseInt(choice) - 1;
-                if (isNaN(bookIndex) || bookIndex < 0 || bookIndex >= transactions.length) {
-                    alert('Invalid selection. Please enter a number from the list.');
-                    return;
-                }
-
-                const transactionToReturn = transactions[bookIndex];
-                
-                // Confirm return
-                const confirmReturn = confirm(`Return "${transactionToReturn.book_title}"?\n\nCopy: #${transactionToReturn.copy_number}\nMember: ${transactionToReturn.member_name}\n\nThis will make the copy available for borrowing again.`);
-                
-                if (!confirmReturn) return;
-
-                // Process the return
-                await processReturn(transactionToReturn.id, transactionToReturn.book_title, transactionToReturn.copy_number);
-
-            } catch (error) {
-                console.error('Error in return books:', error);
-                alert(`Error accessing return system: ${error.message}`);
-            }
-        }
-
-        // Process individual book return
-        async function processReturn(transactionId, bookTitle, copyNumber) {
-            try {
-                const response = await fetch(`/api/transactions/${transactionId}/return`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        return_notes: 'Returned via web interface'
-                    })
-                });
-
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to return book');
-                }
-
-                const result = await response.json();
-
-                // Reload the books to show updated copy counts
-                loadBooks();
-                
-                alert(`✅ Book returned successfully!\n\n"${bookTitle}" copy #${copyNumber}\nReturned on: ${new Date().toLocaleDateString()}\n\nThis copy is now available for borrowing again.`);
-
-            } catch (error) {
-                console.error('Error returning book:', error);
-                alert(`Error returning book: ${error.message}`);
             }
         }
 

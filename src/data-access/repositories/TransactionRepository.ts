@@ -4,7 +4,6 @@ import type {
   CreateBorrowingRequest,
   MemberBorrowingSummary,
   TransactionStatus,
-  UpdateTransactionRequest,
 } from '../../application/models/BorrowingTransaction.js';
 import type { DatabaseConnection } from '../DatabaseConnection.js';
 

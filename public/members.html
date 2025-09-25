@@ -1,0 +1,1117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Library Members Management</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+    
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <style>
+        .member-card {
+            transition: all 0.2s ease;
+            border: 1px solid #e0e0e0;
+        }
+        
+        .member-card:hover {
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        
+        .member-status-badge {
+            font-size: 0.75em;
+            padding: 0.25em 0.5em;
+        }
+        
+        .member-stats {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 10px;
+        }
+        
+        .borrowing-summary {
+            background-color: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        
+        .search-container {
+            background: #f8f9fa;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .member-actions .btn {
+            margin: 0.2rem;
+        }
+        
+        .overdue-alert {
+            border-left: 4px solid #dc3545;
+        }
+        
+        .active-borrows-good {
+            border-left: 4px solid #28a745;
+        }
+        
+        .member-list-view .member-row {
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        
+        .member-list-view .member-row:hover {
+            background-color: #f8f9fa;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-people-fill"></i> Library Members
+            </a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">
+                    <i class="bi bi-book"></i> Books
+                </a>
+                <a class="nav-link active" href="/members.html">
+                    <i class="bi bi-people"></i> Members
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container-fluid mt-4">
+        <!-- Header Section -->
+        <div class="row">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <h2 class="mb-0">
+                        <i class="bi bi-people-fill text-primary"></i>
+                        Library Members
+                    </h2>
+                    <div class="btn-group" role="group">
+                        <button type="button" class="btn btn-primary" onclick="toggleView()">
+                            <i class="bi bi-grid-3x3-gap" id="view-icon"></i>
+                            <span id="view-text">Card View</span>
+                        </button>
+                        <button type="button" class="btn btn-success" data-bs-toggle="modal" data-bs-target="#addMemberModal">
+                            <i class="bi bi-person-plus"></i> Add Member
+                        </button>
+                        <button type="button" class="btn btn-info" onclick="refreshMembers()">
+                            <i class="bi bi-arrow-clockwise"></i> Refresh
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Statistics Section -->
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <div class="card member-stats h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title" id="total-members">-</h3>
+                        <p class="card-text">Total Members</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-success text-white h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title" id="active-members">-</h3>
+                        <p class="card-text">Active Members</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-warning text-white h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title" id="members-with-borrows">-</h3>
+                        <p class="card-text">With Active Borrows</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="card bg-danger text-white h-100">
+                    <div class="card-body text-center">
+                        <h3 class="card-title" id="members-overdue">-</h3>
+                        <p class="card-text">With Overdue</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Search and Filter Section -->
+        <div class="search-container">
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="input-group">
+                        <span class="input-group-text">
+                            <i class="bi bi-search"></i>
+                        </span>
+                        <input type="text" class="form-control" id="search-members" 
+                               placeholder="Search by name, email, or member ID...">
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="status-filter">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="suspended">Suspended</option>
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select class="form-select" id="sort-by">
+                        <option value="name">Sort by Name</option>
+                        <option value="member_id">Sort by Member ID</option>
+                        <option value="registration_date">Sort by Join Date</option>
+                        <option value="email">Sort by Email</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Members Content -->
+        <div id="members-content">
+            <!-- Loading indicator -->
+            <div id="loading" class="text-center my-5">
+                <div class="spinner-border text-primary" role="status">
+                    <span class="visually-hidden">Loading members...</span>
+                </div>
+                <p class="mt-2">Loading members...</p>
+            </div>
+
+            <!-- Error message -->
+            <div id="error" class="alert alert-danger d-none" role="alert">
+                <i class="bi bi-exclamation-triangle"></i>
+                <span id="error-message">Failed to load members</span>
+            </div>
+
+            <!-- Card View -->
+            <div id="card-view" class="row">
+                <!-- Members will be populated here -->
+            </div>
+
+            <!-- List View -->
+            <div id="list-view" class="d-none">
+                <div class="table-responsive">
+                    <table class="table table-hover member-list-view">
+                        <thead class="table-dark">
+                            <tr>
+                                <th>Member ID</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Status</th>
+                                <th>Active Borrows</th>
+                                <th>Join Date</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="members-table-body">
+                            <!-- Members will be populated here -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Member Modal -->
+    <div class="modal fade" id="addMemberModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-plus"></i> Add New Member
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="add-member-form">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="first-name" class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="first-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="last-name" class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="last-name" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="phone">
+                        </div>
+                        <div class="mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" rows="3"></textarea>
+                        </div>
+                    </form>
+                    
+                    <!-- Success/Error Messages -->
+                    <div id="add-form-success" class="alert alert-success d-none mt-3">
+                        <i class="bi bi-check-circle"></i>
+                        <span id="add-success-message"></span>
+                    </div>
+                    <div id="add-form-error" class="alert alert-danger d-none mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span id="add-error-message"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="addMember()">
+                        <i class="bi bi-person-plus"></i> Add Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Member Modal -->
+    <div class="modal fade" id="editMemberModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-gear"></i> Edit Member
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-member-form">
+                        <input type="hidden" id="edit-member-id">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="edit-first-name" class="form-label">First Name *</label>
+                                    <input type="text" class="form-control" id="edit-first-name" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label for="edit-last-name" class="form-label">Last Name *</label>
+                                    <input type="text" class="form-control" id="edit-last-name" required>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-email" class="form-label">Email *</label>
+                            <input type="email" class="form-control" id="edit-email" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-phone" class="form-label">Phone</label>
+                            <input type="tel" class="form-control" id="edit-phone">
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-address" class="form-label">Address</label>
+                            <textarea class="form-control" id="edit-address" rows="3"></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-status" class="form-label">Status</label>
+                            <select class="form-select" id="edit-status">
+                                <option value="active">Active</option>
+                                <option value="inactive">Inactive</option>
+                                <option value="suspended">Suspended</option>
+                            </select>
+                        </div>
+                    </form>
+                    
+                    <!-- Success/Error Messages -->
+                    <div id="edit-form-success" class="alert alert-success d-none mt-3">
+                        <i class="bi bi-check-circle"></i>
+                        <span id="edit-success-message"></span>
+                    </div>
+                    <div id="edit-form-error" class="alert alert-danger d-none mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <span id="edit-error-message"></span>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateMember()">
+                        <i class="bi bi-check"></i> Update Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Member Details Modal -->
+    <div class="modal fade" id="memberDetailsModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-person-circle"></i> Member Details
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="member-details-content">
+                        <!-- Member details will be populated here -->
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                    <button type="button" class="btn btn-primary" onclick="editMemberFromDetails()">
+                        <i class="bi bi-pencil"></i> Edit Member
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let allMembers = [];
+        let currentView = 'card'; // 'card' or 'list'
+        let selectedMemberId = null;
+
+        // Initialize page
+        document.addEventListener('DOMContentLoaded', function() {
+            loadMembers();
+            loadStatistics();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            // Search functionality
+            document.getElementById('search-members').addEventListener('input', debounce(filterMembers, 300));
+            
+            // Filter functionality
+            document.getElementById('status-filter').addEventListener('change', filterMembers);
+            document.getElementById('sort-by').addEventListener('change', sortMembers);
+        }
+
+        // Load all members
+        async function loadMembers() {
+            try {
+                showLoading();
+                const response = await fetch('/api/members');
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                allMembers = await response.json();
+                
+                hideLoading();
+                renderMembers(allMembers);
+                
+            } catch (error) {
+                console.error('Error loading members:', error);
+                showError(`Error loading members: ${error.message}`);
+            }
+        }
+
+        // Load statistics
+        async function loadStatistics() {
+            try {
+                const response = await fetch('/api/members/statistics');
+                if (response.ok) {
+                    const stats = await response.json();
+                    
+                    document.getElementById('total-members').textContent = stats.total_members || 0;
+                    document.getElementById('active-members').textContent = stats.active_members || 0;
+                    document.getElementById('members-with-borrows').textContent = stats.members_with_active_borrows || 0;
+                    document.getElementById('members-overdue').textContent = stats.members_with_overdue || 0;
+                }
+            } catch (error) {
+                console.error('Error loading statistics:', error);
+            }
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.remove('d-none');
+            document.getElementById('error').classList.add('d-none');
+            document.getElementById('card-view').innerHTML = '';
+            document.getElementById('members-table-body').innerHTML = '';
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.add('d-none');
+        }
+
+        function showError(message) {
+            hideLoading();
+            document.getElementById('error-message').textContent = message;
+            document.getElementById('error').classList.remove('d-none');
+        }
+
+        // Render members based on current view
+        function renderMembers(members) {
+            if (currentView === 'card') {
+                renderCardView(members);
+            } else {
+                renderListView(members);
+            }
+        }
+
+        function renderCardView(members) {
+            const container = document.getElementById('card-view');
+            container.innerHTML = '';
+            
+            if (members.length === 0) {
+                container.innerHTML = `
+                    <div class="col-12">
+                        <div class="text-center py-5">
+                            <i class="bi bi-people display-1 text-muted"></i>
+                            <h4 class="text-muted">No members found</h4>
+                            <p class="text-muted">Try adjusting your search or filter criteria.</p>
+                        </div>
+                    </div>
+                `;
+                return;
+            }
+
+            members.forEach(member => {
+                const memberCard = createMemberCard(member);
+                container.appendChild(memberCard);
+            });
+        }
+
+        function createMemberCard(member) {
+            const col = document.createElement('div');
+            col.className = 'col-md-6 col-lg-4 mb-4';
+            
+            const statusBadgeClass = {
+                'active': 'bg-success',
+                'inactive': 'bg-secondary',
+                'suspended': 'bg-danger'
+            }[member.status] || 'bg-secondary';
+            
+            col.innerHTML = `
+                <div class="card member-card h-100">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="card-title mb-0">
+                                ${escapeHtml(member.first_name)} ${escapeHtml(member.last_name)}
+                            </h5>
+                            <span class="badge ${statusBadgeClass} member-status-badge">
+                                ${member.status}
+                            </span>
+                        </div>
+                        
+                        <p class="text-muted small mb-2">
+                            <i class="bi bi-person-badge"></i> ${member.member_id}
+                        </p>
+                        
+                        <p class="card-text">
+                            <i class="bi bi-envelope"></i> ${escapeHtml(member.email || 'No email')}
+                        </p>
+                        
+                        ${member.phone ? `
+                            <p class="card-text">
+                                <i class="bi bi-telephone"></i> ${escapeHtml(member.phone)}
+                            </p>
+                        ` : ''}
+                        
+                        <p class="text-muted small">
+                            <i class="bi bi-calendar"></i> 
+                            Joined: ${new Date(member.registration_date).toLocaleDateString()}
+                        </p>
+                        
+                        <div class="borrowing-summary">
+                            <small class="text-muted">Borrowing Status</small>
+                            <div class="d-flex justify-content-between">
+                                <span>Active Borrows:</span>
+                                <strong class="text-primary">${member.active_borrows || 0}/3</strong>
+                            </div>
+                            ${member.overdue_count > 0 ? `
+                                <div class="d-flex justify-content-between text-danger">
+                                    <span>Overdue:</span>
+                                    <strong>${member.overdue_count}</strong>
+                                </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer bg-transparent">
+                        <div class="member-actions d-flex flex-wrap">
+                            <button class="btn btn-outline-primary btn-sm" onclick="viewMemberDetails('${member.id}')">
+                                <i class="bi bi-eye"></i> Details
+                            </button>
+                            <button class="btn btn-outline-secondary btn-sm" onclick="editMember('${member.id}')">
+                                <i class="bi bi-pencil"></i> Edit
+                            </button>
+                            <button class="btn btn-outline-info btn-sm" onclick="viewMemberBorrowings('${member.member_id}')">
+                                <i class="bi bi-book"></i> Borrows
+                            </button>
+                            <button class="btn btn-outline-warning btn-sm" onclick="changeStatus('${member.id}', '${member.status}')">
+                                <i class="bi bi-toggle-on"></i> Status
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            return col;
+        }
+
+        function renderListView(members) {
+            const tbody = document.getElementById('members-table-body');
+            tbody.innerHTML = '';
+            
+            if (members.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" class="text-center py-4">
+                            <i class="bi bi-people display-6 text-muted"></i>
+                            <p class="text-muted mt-2">No members found</p>
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            members.forEach(member => {
+                const row = createMemberRow(member);
+                tbody.appendChild(row);
+            });
+        }
+
+        function createMemberRow(member) {
+            const tr = document.createElement('tr');
+            tr.className = 'member-row';
+            tr.onclick = () => viewMemberDetails(member.id);
+            
+            const statusBadgeClass = {
+                'active': 'bg-success',
+                'inactive': 'bg-secondary', 
+                'suspended': 'bg-danger'
+            }[member.status] || 'bg-secondary';
+            
+            tr.innerHTML = `
+                <td><code>${member.member_id}</code></td>
+                <td>
+                    <strong>${escapeHtml(member.first_name)} ${escapeHtml(member.last_name)}</strong>
+                </td>
+                <td>${escapeHtml(member.email || '')}</td>
+                <td>
+                    <span class="badge ${statusBadgeClass}">${member.status}</span>
+                </td>
+                <td>
+                    <span class="badge bg-info">${member.active_borrows || 0}/3</span>
+                    ${member.overdue_count > 0 ? `<span class="badge bg-danger ms-1">${member.overdue_count} overdue</span>` : ''}
+                </td>
+                <td>${new Date(member.registration_date).toLocaleDateString()}</td>
+                <td>
+                    <div class="btn-group btn-group-sm" role="group">
+                        <button class="btn btn-outline-primary" onclick="event.stopPropagation(); viewMemberDetails('${member.id}')" title="View Details">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                        <button class="btn btn-outline-secondary" onclick="event.stopPropagation(); editMember('${member.id}')" title="Edit">
+                            <i class="bi bi-pencil"></i>
+                        </button>
+                        <button class="btn btn-outline-info" onclick="event.stopPropagation(); viewMemberBorrowings('${member.member_id}')" title="View Borrowings">
+                            <i class="bi bi-book"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            
+            return tr;
+        }
+
+        function toggleView() {
+            currentView = currentView === 'card' ? 'list' : 'card';
+            
+            const cardView = document.getElementById('card-view');
+            const listView = document.getElementById('list-view');
+            const viewIcon = document.getElementById('view-icon');
+            const viewText = document.getElementById('view-text');
+            
+            if (currentView === 'card') {
+                cardView.classList.remove('d-none');
+                listView.classList.add('d-none');
+                viewIcon.className = 'bi bi-grid-3x3-gap';
+                viewText.textContent = 'Card View';
+            } else {
+                cardView.classList.add('d-none');
+                listView.classList.remove('d-none');
+                viewIcon.className = 'bi bi-list-ul';
+                viewText.textContent = 'List View';
+            }
+            
+            renderMembers(getFilteredMembers());
+        }
+
+        // Filter and search functionality
+        function filterMembers() {
+            const filtered = getFilteredMembers();
+            renderMembers(filtered);
+        }
+
+        function getFilteredMembers() {
+            let filtered = [...allMembers];
+            
+            // Apply search filter
+            const searchTerm = document.getElementById('search-members').value.toLowerCase();
+            if (searchTerm) {
+                filtered = filtered.filter(member => 
+                    member.first_name.toLowerCase().includes(searchTerm) ||
+                    member.last_name.toLowerCase().includes(searchTerm) ||
+                    member.email.toLowerCase().includes(searchTerm) ||
+                    member.member_id.toLowerCase().includes(searchTerm)
+                );
+            }
+            
+            // Apply status filter
+            const statusFilter = document.getElementById('status-filter').value;
+            if (statusFilter) {
+                filtered = filtered.filter(member => member.status === statusFilter);
+            }
+            
+            return filtered;
+        }
+
+        function sortMembers() {
+            const sortBy = document.getElementById('sort-by').value;
+            const filtered = getFilteredMembers();
+            
+            filtered.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (sortBy) {
+                    case 'name':
+                        aValue = `${a.first_name} ${a.last_name}`.toLowerCase();
+                        bValue = `${b.first_name} ${b.last_name}`.toLowerCase();
+                        break;
+                    case 'member_id':
+                        aValue = a.member_id.toLowerCase();
+                        bValue = b.member_id.toLowerCase();
+                        break;
+                    case 'registration_date':
+                        aValue = new Date(a.registration_date);
+                        bValue = new Date(b.registration_date);
+                        break;
+                    case 'email':
+                        aValue = (a.email || '').toLowerCase();
+                        bValue = (b.email || '').toLowerCase();
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (aValue < bValue) return -1;
+                if (aValue > bValue) return 1;
+                return 0;
+            });
+            
+            renderMembers(filtered);
+        }
+
+        // Member management functions
+        async function addMember() {
+            try {
+                const firstName = document.getElementById('first-name').value.trim();
+                const lastName = document.getElementById('last-name').value.trim();
+                const email = document.getElementById('email').value.trim();
+                const phone = document.getElementById('phone').value.trim();
+                const address = document.getElementById('address').value.trim();
+                
+                // Clear previous messages
+                document.getElementById('add-form-success').classList.add('d-none');
+                document.getElementById('add-form-error').classList.add('d-none');
+                
+                // Validation
+                if (!firstName || !lastName || !email) {
+                    showAddError('First name, last name, and email are required.');
+                    return;
+                }
+                
+                const memberData = {
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone: phone || undefined,
+                    address: address || undefined
+                };
+                
+                const response = await fetch('/api/members', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(memberData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to add member');
+                }
+                
+                const newMember = await response.json();
+                
+                // Show success
+                showAddSuccess(`Successfully added ${newMember.first_name} ${newMember.last_name}!`);
+                
+                // Clear form
+                document.getElementById('add-member-form').reset();
+                
+                // Refresh data
+                await loadMembers();
+                await loadStatistics();
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('addMemberModal'));
+                    modal.hide();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error adding member:', error);
+                showAddError(error.message);
+            }
+        }
+
+        async function editMember(memberId) {
+            try {
+                const response = await fetch(`/api/members/${memberId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch member data');
+                }
+                
+                const member = await response.json();
+                
+                // Populate edit form
+                document.getElementById('edit-member-id').value = member.id;
+                document.getElementById('edit-first-name').value = member.first_name;
+                document.getElementById('edit-last-name').value = member.last_name;
+                document.getElementById('edit-email').value = member.email || '';
+                document.getElementById('edit-phone').value = member.phone || '';
+                document.getElementById('edit-address').value = member.address || '';
+                document.getElementById('edit-status').value = member.status;
+                
+                // Clear messages
+                document.getElementById('edit-form-success').classList.add('d-none');
+                document.getElementById('edit-form-error').classList.add('d-none');
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('editMemberModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error loading member for edit:', error);
+                alert(`Error loading member data: ${error.message}`);
+            }
+        }
+
+        async function updateMember() {
+            try {
+                const memberId = document.getElementById('edit-member-id').value;
+                const firstName = document.getElementById('edit-first-name').value.trim();
+                const lastName = document.getElementById('edit-last-name').value.trim();
+                const email = document.getElementById('edit-email').value.trim();
+                const phone = document.getElementById('edit-phone').value.trim();
+                const address = document.getElementById('edit-address').value.trim();
+                const status = document.getElementById('edit-status').value;
+                
+                // Clear previous messages
+                document.getElementById('edit-form-success').classList.add('d-none');
+                document.getElementById('edit-form-error').classList.add('d-none');
+                
+                // Validation
+                if (!firstName || !lastName || !email) {
+                    showEditError('First name, last name, and email are required.');
+                    return;
+                }
+                
+                const memberData = {
+                    first_name: firstName,
+                    last_name: lastName,
+                    email: email,
+                    phone: phone || undefined,
+                    address: address || undefined,
+                    status: status
+                };
+                
+                const response = await fetch(`/api/members/${memberId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(memberData)
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update member');
+                }
+                
+                const updatedMember = await response.json();
+                
+                // Show success
+                showEditSuccess(`Successfully updated ${updatedMember.first_name} ${updatedMember.last_name}!`);
+                
+                // Refresh data
+                await loadMembers();
+                await loadStatistics();
+                
+                // Close modal after delay
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editMemberModal'));
+                    modal.hide();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error updating member:', error);
+                showEditError(error.message);
+            }
+        }
+
+        async function viewMemberDetails(memberId) {
+            try {
+                selectedMemberId = memberId;
+                
+                // Fetch member details
+                const memberResponse = await fetch(`/api/members/${memberId}`);
+                if (!memberResponse.ok) {
+                    throw new Error('Failed to fetch member details');
+                }
+                const member = await memberResponse.json();
+                
+                // Fetch borrowing summary
+                let borrowingSummary = null;
+                try {
+                    const borrowingResponse = await fetch(`/api/members/${member.member_id}/borrowing`);
+                    if (borrowingResponse.ok) {
+                        borrowingSummary = await borrowingResponse.json();
+                    }
+                } catch (e) {
+                    console.log('No borrowing data available');
+                }
+                
+                // Populate modal
+                const content = document.getElementById('member-details-content');
+                content.innerHTML = createMemberDetailsHTML(member, borrowingSummary);
+                
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('memberDetailsModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error loading member details:', error);
+                alert(`Error loading member details: ${error.message}`);
+            }
+        }
+
+        function createMemberDetailsHTML(member, borrowingSummary) {
+            const statusBadgeClass = {
+                'active': 'bg-success',
+                'inactive': 'bg-secondary',
+                'suspended': 'bg-danger'
+            }[member.status] || 'bg-secondary';
+            
+            return `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-person-circle"></i> Personal Information</h6>
+                        <table class="table table-sm">
+                            <tr>
+                                <th>Member ID:</th>
+                                <td><code>${member.member_id}</code></td>
+                            </tr>
+                            <tr>
+                                <th>Name:</th>
+                                <td>${escapeHtml(member.first_name)} ${escapeHtml(member.last_name)}</td>
+                            </tr>
+                            <tr>
+                                <th>Email:</th>
+                                <td>${escapeHtml(member.email || 'Not provided')}</td>
+                            </tr>
+                            <tr>
+                                <th>Phone:</th>
+                                <td>${escapeHtml(member.phone || 'Not provided')}</td>
+                            </tr>
+                            <tr>
+                                <th>Status:</th>
+                                <td><span class="badge ${statusBadgeClass}">${member.status}</span></td>
+                            </tr>
+                            <tr>
+                                <th>Joined:</th>
+                                <td>${new Date(member.registration_date).toLocaleDateString()}</td>
+                            </tr>
+                        </table>
+                        
+                        ${member.address ? `
+                            <h6><i class="bi bi-geo-alt"></i> Address</h6>
+                            <p class="text-muted">${escapeHtml(member.address)}</p>
+                        ` : ''}
+                    </div>
+                    
+                    <div class="col-md-6">
+                        <h6><i class="bi bi-book"></i> Borrowing Information</h6>
+                        ${borrowingSummary ? `
+                            <div class="borrowing-summary ${borrowingSummary.overdue_count > 0 ? 'overdue-alert' : 'active-borrows-good'}">
+                                <div class="d-flex justify-content-between">
+                                    <span>Active Borrows:</span>
+                                    <strong>${borrowingSummary.active_borrows_count}/3</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Total Borrowed:</span>
+                                    <strong>${borrowingSummary.total_borrows_count}</strong>
+                                </div>
+                                <div class="d-flex justify-content-between">
+                                    <span>Overdue Books:</span>
+                                    <strong class="${borrowingSummary.overdue_count > 0 ? 'text-danger' : ''}">${borrowingSummary.overdue_count}</strong>
+                                </div>
+                                
+                                ${borrowingSummary.active_transactions && borrowingSummary.active_transactions.length > 0 ? `
+                                    <hr>
+                                    <small class="text-muted">Currently Borrowed:</small>
+                                    ${borrowingSummary.active_transactions.map(t => `
+                                        <div class="d-flex justify-content-between small">
+                                            <span>"${t.book_title}"</span>
+                                            <span>Due: ${new Date(t.due_date).toLocaleDateString()}</span>
+                                        </div>
+                                    `).join('')}
+                                ` : ''}
+                            </div>
+                        ` : `
+                            <div class="text-muted">
+                                <p>No borrowing history available.</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+        }
+
+        function editMemberFromDetails() {
+            const modal = bootstrap.Modal.getInstance(document.getElementById('memberDetailsModal'));
+            modal.hide();
+            setTimeout(() => editMember(selectedMemberId), 300);
+        }
+
+        async function viewMemberBorrowings(memberId) {
+            try {
+                const response = await fetch(`/api/members/${memberId}/borrowing`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch borrowing data');
+                }
+                
+                const summary = await response.json();
+                
+                let borrowingsInfo = `📚 BORROWING SUMMARY FOR ${summary.member_name}\n\n`;
+                borrowingsInfo += `• Active Borrows: ${summary.active_borrows_count}/3\n`;
+                borrowingsInfo += `• Total Books Borrowed: ${summary.total_borrows_count}\n`;
+                borrowingsInfo += `• Overdue Books: ${summary.overdue_count}\n\n`;
+                
+                if (summary.active_transactions && summary.active_transactions.length > 0) {
+                    borrowingsInfo += `CURRENTLY BORROWED:\n`;
+                    summary.active_transactions.forEach((t, index) => {
+                        const dueDate = new Date(t.due_date).toLocaleDateString();
+                        const isOverdue = new Date(t.due_date) < new Date();
+                        borrowingsInfo += `${index + 1}. "${t.book_title}" by ${t.book_author}\n`;
+                        borrowingsInfo += `   Copy #${t.copy_number} - Due: ${dueDate}${isOverdue ? ' ⚠️ OVERDUE' : ''}\n\n`;
+                    });
+                } else {
+                    borrowingsInfo += `No books currently borrowed.`;
+                }
+                
+                alert(borrowingsInfo);
+                
+            } catch (error) {
+                console.error('Error fetching borrowings:', error);
+                alert(`Error fetching borrowing data: ${error.message}`);
+            }
+        }
+
+        async function changeStatus(memberId, currentStatus) {
+            const newStatus = prompt(`Change member status from "${currentStatus}" to:`, currentStatus);
+            if (!newStatus || newStatus === currentStatus) return;
+            
+            if (!['active', 'inactive', 'suspended'].includes(newStatus)) {
+                alert('Status must be: active, inactive, or suspended');
+                return;
+            }
+            
+            try {
+                const response = await fetch(`/api/members/${memberId}/status`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ status: newStatus })
+                });
+                
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update status');
+                }
+                
+                // Refresh members
+                await loadMembers();
+                await loadStatistics();
+                
+                alert(`Member status updated to "${newStatus}"`);
+                
+            } catch (error) {
+                console.error('Error updating status:', error);
+                alert(`Error updating status: ${error.message}`);
+            }
+        }
+
+        function refreshMembers() {
+            loadMembers();
+            loadStatistics();
+        }
+
+        // Utility functions
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function debounce(func, delay) {
+            let timeoutId;
+            return function (...args) {
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => func.apply(this, args), delay);
+            };
+        }
+
+        function showAddSuccess(message) {
+            document.getElementById('add-success-message').textContent = message;
+            document.getElementById('add-form-success').classList.remove('d-none');
+        }
+
+        function showAddError(message) {
+            document.getElementById('add-error-message').textContent = message;
+            document.getElementById('add-form-error').classList.remove('d-none');
+        }
+
+        function showEditSuccess(message) {
+            document.getElementById('edit-success-message').textContent = message;
+            document.getElementById('edit-form-success').classList.remove('d-none');
+        }
+
+        function showEditError(message) {
+            document.getElementById('edit-error-message').textContent = message;
+            document.getElementById('edit-form-error').classList.remove('d-none');
+        }
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"></script>
+</body>
+</html>
