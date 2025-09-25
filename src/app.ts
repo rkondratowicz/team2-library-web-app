@@ -5,6 +5,7 @@ import { databaseConnection } from './data-access/DatabaseConnection.js';
 import { bookController } from './presentation/controllers/BookController.js';
 import { memberController } from './presentation/controllers/MemberController.js';
 import { transactionController } from './presentation/controllers/TransactionController.js';
+import { rentalController } from './presentation/controllers/RentalController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -128,6 +129,44 @@ app.post(
   transactionController.quickBorrowCopy.bind(transactionController)
 );
 
+// Rental Analytics API routes
+app.get(
+  '/api/rentals/books/:bookId/current-borrowers',
+  rentalController.getCurrentBorrowersForBook.bind(rentalController)
+);
+app.get(
+  '/api/rentals/books/:bookId/borrowers/all',
+  rentalController.getAllBorrowersForBook.bind(rentalController)
+);
+app.get(
+  '/api/rentals/books/:bookId/summary',
+  rentalController.getBookBorrowingSummary.bind(rentalController)
+);
+app.get(
+  '/api/rentals/members/:memberId/current-books',
+  rentalController.getCurrentBooksByMember.bind(rentalController)
+);
+app.get(
+  '/api/rentals/members/:memberId/books/all',
+  rentalController.getAllBooksByMember.bind(rentalController)
+);
+app.get(
+  '/api/rentals/active-summary',
+  rentalController.getActiveSummary.bind(rentalController)
+);
+app.get(
+  '/api/rentals/statistics',
+  rentalController.getRentalStatistics.bind(rentalController)
+);
+app.get(
+  '/api/rentals/associations',
+  rentalController.getMemberBookAssociations.bind(rentalController)
+);
+app.get(
+  '/api/rentals/overdue',
+  rentalController.getOverdueRentals.bind(rentalController)
+);
+
 // Initialize database and start server
 async function startServer() {
   try {
@@ -143,6 +182,9 @@ async function startServer() {
       );
       console.log(
         `Transactions API available at http://localhost:${PORT}/api/transactions`
+      );
+      console.log(
+        `Rentals API available at http://localhost:${PORT}/api/rentals`
       );
     });
   } catch (error) {
