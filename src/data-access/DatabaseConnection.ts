@@ -93,18 +93,18 @@ export class DatabaseConnection {
     }
   }
 
-  async run(sql: string, params: unknown[] = []): Promise<void> {
+  async run(sql: string, params: unknown[] = []): Promise<{ changes: number; lastID: number }> {
     return new Promise((resolve, reject) => {
       if (!this.db) {
         reject(new Error('Database not connected'));
         return;
       }
 
-      this.db.run(sql, params, (err) => {
+      this.db.run(sql, params, function(err) {
         if (err) {
           reject(err);
         } else {
-          resolve();
+          resolve({ changes: this.changes, lastID: this.lastID });
         }
       });
     });

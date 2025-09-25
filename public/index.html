@@ -52,7 +52,8 @@
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="book-genre" class="form-label">Genre</label>
-                                    <input type="text" class="form-control" id="book-genre">
+                                    <input type="text" class="form-control" id="book-genre" maxlength="32" placeholder="e.g., Fiction, Science">
+                                    <div class="form-text">Max: 32 characters</div>
                                 </div>
                                 <div class="col-md-4 mb-3">
                                     <label for="book-year" class="form-label">Publication Year</label>
@@ -99,6 +100,7 @@
                                         <th scope="col">ISBN</th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(4)">Genre <span id="genre-sort">↕️</span></th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(5)">Year <span id="year-sort">↕️</span></th>
+                                        <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="books-tbody">
@@ -107,6 +109,62 @@
                             </table>
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Book Modal -->
+    <div class="modal fade" id="editBookModal" tabindex="-1" aria-labelledby="editBookModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="editBookModalLabel">✏️ Edit Book</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="edit-book-form">
+                        <input type="hidden" id="edit-book-id">
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-book-title" class="form-label">Title *</label>
+                                <input type="text" class="form-control" id="edit-book-title" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="edit-book-author" class="form-label">Author *</label>
+                                <input type="text" class="form-control" id="edit-book-author" required>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label for="edit-book-isbn" class="form-label">ISBN</label>
+                                <input type="text" class="form-control" id="edit-book-isbn" placeholder="10-13 digits" pattern="[\d\-\s]{10,17}">
+                                <div class="form-text">Optional: 10-13 digits</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit-book-genre" class="form-label">Genre</label>
+                                <input type="text" class="form-control" id="edit-book-genre" placeholder="e.g., Fiction, Science" maxlength="32">
+                                <div class="form-text">Max: 32 characters</div>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="edit-book-year" class="form-label">Publication Year</label>
+                                <input type="number" class="form-control" id="edit-book-year" min="-3000" max="2025" placeholder="e.g., 2023">
+                                <div class="form-text">Max: 2025</div>
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="edit-book-description" class="form-label">Description</label>
+                            <textarea class="form-control" id="edit-book-description" rows="3" placeholder="Brief description of the book..."></textarea>
+                        </div>
+                        
+                        <!-- Success/Error Messages -->
+                        <div id="edit-form-success" class="alert alert-success d-none" role="alert"></div>
+                        <div id="edit-form-error" class="alert alert-danger d-none" role="alert"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="updateBook()">💾 Update Book</button>
                 </div>
             </div>
         </div>
@@ -155,7 +213,7 @@
             if (books.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center empty-state">
+                        <td colspan="7" class="text-center empty-state">
                             <div class="empty-state-icon">📚</div>
                             <em>No books found in the library.</em>
                         </td>
@@ -167,6 +225,8 @@
             books.forEach((book, index) => {
                 const row = document.createElement('tr');
                 row.className = 'book-row';
+                row.style.cursor = 'pointer';
+                row.setAttribute('data-book-id', book.id);
                 row.innerHTML = `
                     <td><span class="book-id">${book.id}</span></td>
                     <td class="book-title">${escapeHtml(book.title)}</td>
@@ -174,7 +234,23 @@
                     <td class="book-isbn">${book.isbn || 'N/A'}</td>
                     <td class="book-genre">${escapeHtml(book.genre || 'N/A')}</td>
                     <td class="book-year">${book.publication_year || 'N/A'}</td>
+                    <td class="actions-cell">
+                        <button class="btn btn-primary btn-sm me-2" onclick="event.stopPropagation(); editBook('${book.id}')">
+                            ✏️ Edit
+                        </button>
+                        <button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); deleteBook('${book.id}', '${escapeHtml(book.title)}')">
+                            🗑️ Delete
+                        </button>
+                    </td>
                 `;
+                
+                // Add click handler to toggle inline description (but not for actions column)
+                row.addEventListener('click', (e) => {
+                    if (!e.target.closest('.actions-cell')) {
+                        toggleInlineDescription(row, book);
+                    }
+                });
+                
                 tbody.appendChild(row);
             });
         }
@@ -202,6 +278,94 @@
             document.getElementById('author-sort').textContent = columnIndex === 2 ? (sortDirection[2] === 1 ? '↑' : '↓') : '↕️';
             document.getElementById('genre-sort').textContent = columnIndex === 4 ? (sortDirection[4] === 1 ? '↑' : '↓') : '↕️';
             document.getElementById('year-sort').textContent = columnIndex === 5 ? (sortDirection[5] === 1 ? '↑' : '↓') : '↕️';
+        }
+        
+        // Inline book description functionality
+        let currentExpandedRow = null;
+
+        function toggleInlineDescription(bookRow, book) {
+            // If this row is already expanded, collapse it
+            const existingDescRow = bookRow.nextElementSibling;
+            if (existingDescRow && existingDescRow.classList.contains('description-row')) {
+                existingDescRow.remove();
+                currentExpandedRow = null;
+                return;
+            }
+            
+            // If another row is expanded, collapse it first
+            if (currentExpandedRow) {
+                const prevDescRow = currentExpandedRow.nextElementSibling;
+                if (prevDescRow && prevDescRow.classList.contains('description-row')) {
+                    prevDescRow.remove();
+                }
+            }
+            
+            // Create and insert new description row
+            const descriptionRow = createDescriptionRow(book);
+            bookRow.insertAdjacentElement('afterend', descriptionRow);
+            currentExpandedRow = bookRow;
+            
+            // Animate the expansion
+            setTimeout(() => {
+                descriptionRow.classList.add('show');
+            }, 10);
+        }
+        
+        function createDescriptionRow(book) {
+            const row = document.createElement('tr');
+            row.className = 'description-row';
+            
+            const descriptionContent = book.description && book.description.trim() 
+                ? escapeHtml(book.description)
+                : '<em class="text-muted">No description available for this book.</em>';
+            
+            row.innerHTML = `
+                <td colspan="7" class="description-cell">
+                    <div class="description-content">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <div class="description-header">
+                                    <h6 class="description-title">${escapeHtml(book.title)}</h6>
+                                    <p class="description-author text-muted mb-2">
+                                        <small>by ${escapeHtml(book.author)}</small>
+                                    </p>
+                                </div>
+                                <div class="description-text">
+                                    ${descriptionContent}
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="description-metadata">
+                                    <div class="metadata-item">
+                                        <strong>Genre:</strong> ${escapeHtml(book.genre || 'N/A')}
+                                    </div>
+                                    <div class="metadata-item">
+                                        <strong>Year:</strong> ${book.publication_year || 'N/A'}
+                                    </div>
+                                    <div class="metadata-item">
+                                        <strong>ISBN:</strong> ${book.isbn || 'N/A'}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="description-close">
+                            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="collapseDescription(this)">
+                                ↑ Close
+                            </button>
+                        </div>
+                    </div>
+                </td>
+            `;
+            
+            return row;
+        }
+        
+        function collapseDescription(button) {
+            const descRow = button.closest('.description-row');
+            if (descRow) {
+                descRow.remove();
+                currentExpandedRow = null;
+            }
         }
         
         // Add new book functionality
@@ -321,11 +485,18 @@
                     return;
                 }
                 
+                const genre = document.getElementById('book-genre').value.trim();
+                if (genre && genre.length > 32) {
+                    document.getElementById('form-error').textContent = 'Genre cannot exceed 32 characters';
+                    document.getElementById('form-error').classList.remove('d-none');
+                    return;
+                }
+                
                 const formData = {
                     title: title,
                     author: author,
                     isbn: isbn || undefined,
-                    genre: document.getElementById('book-genre').value.trim() || undefined,
+                    genre: genre || undefined,
                     publication_year: year ? parseInt(year) : undefined,
                     description: document.getElementById('book-description').value.trim() || undefined
                 };
@@ -333,6 +504,161 @@
                 addBook(formData);
             });
         });
+
+        // Delete book functionality
+        async function deleteBook(bookId, bookTitle) {
+            // Show confirmation dialog
+            const confirmed = confirm(`Are you sure you want to delete "${bookTitle}"?\n\nThis action cannot be undone.`);
+            
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/books/${bookId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.status === 204) {
+                    // Success - reload books to show updated list
+                    loadBooks();
+                    
+                    // Show success message (you can enhance this with a better notification system)
+                    alert(`"${bookTitle}" has been successfully deleted from the library.`);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete book');
+                }
+                
+            } catch (error) {
+                console.error('Error deleting book:', error);
+                alert(`Error deleting book: ${error.message}`);
+            }
+        }
+
+        // Edit book functionality
+        async function editBook(bookId) {
+            try {
+                // Fetch current book data
+                const response = await fetch(`/api/books/${bookId}`);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch book data');
+                }
+                const book = await response.json();
+                
+                // Populate the edit form
+                document.getElementById('edit-book-id').value = book.id;
+                document.getElementById('edit-book-title').value = book.title;
+                document.getElementById('edit-book-author').value = book.author;
+                document.getElementById('edit-book-isbn').value = book.isbn || '';
+                document.getElementById('edit-book-genre').value = book.genre || '';
+                document.getElementById('edit-book-year').value = book.publication_year || '';
+                document.getElementById('edit-book-description').value = book.description || '';
+                
+                // Clear any previous messages
+                document.getElementById('edit-form-success').classList.add('d-none');
+                document.getElementById('edit-form-error').classList.add('d-none');
+                
+                // Show the modal
+                const modal = new bootstrap.Modal(document.getElementById('editBookModal'));
+                modal.show();
+                
+            } catch (error) {
+                console.error('Error fetching book for edit:', error);
+                alert(`Error loading book data: ${error.message}`);
+            }
+        }
+
+        async function updateBook() {
+            try {
+                const bookId = document.getElementById('edit-book-id').value;
+                const title = document.getElementById('edit-book-title').value.trim();
+                const author = document.getElementById('edit-book-author').value.trim();
+                const isbn = document.getElementById('edit-book-isbn').value.trim();
+                const year = document.getElementById('edit-book-year').value;
+                
+                // Client-side validation
+                if (!title || !author) {
+                    document.getElementById('edit-form-error').textContent = 'Title and Author are required';
+                    document.getElementById('edit-form-error').classList.remove('d-none');
+                    return;
+                }
+                
+                if (isbn) {
+                    const cleanISBN = isbn.replace(/[-\s]/g, '');
+                    if (!/^\d{10,13}$/.test(cleanISBN)) {
+                        document.getElementById('edit-form-error').textContent = 'ISBN must be 10-13 digits only';
+                        document.getElementById('edit-form-error').classList.remove('d-none');
+                        return;
+                    }
+                }
+                
+                if (year && parseInt(year) > 2025) {
+                    document.getElementById('edit-form-error').textContent = 'Publication year cannot be beyond 2025';
+                    document.getElementById('edit-form-error').classList.remove('d-none');
+                    return;
+                }
+                
+                const genre = document.getElementById('edit-book-genre').value.trim();
+                if (genre && genre.length > 32) {
+                    document.getElementById('edit-form-error').textContent = 'Genre cannot exceed 32 characters';
+                    document.getElementById('edit-form-error').classList.remove('d-none');
+                    return;
+                }
+                
+                const formData = {
+                    title: title,
+                    author: author,
+                    isbn: isbn || undefined,
+                    genre: genre || undefined,
+                    publication_year: year ? parseInt(year) : undefined,
+                    description: document.getElementById('edit-book-description').value.trim() || undefined
+                };
+                
+                const response = await fetch(`/api/books/${bookId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
+
+                if (!response.ok) {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to update book');
+                }
+
+                const updatedBook = await response.json();
+                
+                // Show success message
+                const successDiv = document.getElementById('edit-form-success');
+                successDiv.textContent = `Successfully updated "${updatedBook.title}"!`;
+                successDiv.classList.remove('d-none');
+                
+                // Hide error message
+                document.getElementById('edit-form-error').classList.add('d-none');
+                
+                // Reload books to show the updated book
+                loadBooks();
+                
+                // Hide modal after a short delay
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('editBookModal'));
+                    modal.hide();
+                }, 1500);
+                
+            } catch (error) {
+                console.error('Error updating book:', error);
+                
+                // Show error message
+                const errorDiv = document.getElementById('edit-form-error');
+                errorDiv.textContent = error.message;
+                errorDiv.classList.remove('d-none');
+                
+                // Hide success message
+                document.getElementById('edit-form-success').classList.add('d-none');
+            }
+        }
 
         // Load books when page loads
         document.addEventListener('DOMContentLoaded', loadBooks);
