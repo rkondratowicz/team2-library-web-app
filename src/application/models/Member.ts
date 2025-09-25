@@ -24,6 +24,7 @@ export interface Member {
   registration_date: string; // Date format: YYYY-MM-DD
   created_at: string; // ISO datetime string
   updated_at: string; // ISO datetime string
+  active_borrows?: number; // Count of currently borrowed books
 }
 
 /**

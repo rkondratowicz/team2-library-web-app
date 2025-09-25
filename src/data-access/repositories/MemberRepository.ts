@@ -10,11 +10,19 @@ import { databaseConnection } from '../DatabaseConnection.js';
 export class MemberRepository {
   /**
    * Retrieve all members ordered by registration date (newest first)
+   * Includes active borrowing count for each member
    */
   async getAllMembers(): Promise<Member[]> {
-    const rows = await databaseConnection.all(
-      'SELECT * FROM members ORDER BY created_at DESC'
-    );
+    const query = `
+      SELECT 
+        m.*,
+        COUNT(CASE WHEN bt.status = 'Active' THEN 1 END) as active_borrows
+      FROM members m
+      LEFT JOIN borrowing_transactions bt ON m.member_id = bt.member_id
+      GROUP BY m.id
+      ORDER BY m.created_at DESC
+    `;
+    const rows = await databaseConnection.all(query);
     return rows as Member[];
   }
 
