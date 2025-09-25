@@ -170,12 +170,14 @@ export class BookController {
 
       for (const book of books) {
         const copies = await bookService.getCopiesForBook(book.id);
-        const availableCopies = copies.filter(copy => copy.status === 'Available').length;
-        
+        const availableCopies = copies.filter(
+          (copy) => copy.status === 'Available'
+        ).length;
+
         booksWithCopies.push({
           ...book,
           totalCopies: copies.length,
-          availableCopies: availableCopies
+          availableCopies: availableCopies,
         });
       }
 
