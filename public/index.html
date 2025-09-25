@@ -99,6 +99,7 @@
                                         <th scope="col">ISBN</th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(4)">Genre <span id="genre-sort">↕️</span></th>
                                         <th scope="col" style="cursor: pointer;" onclick="sortTable(5)">Year <span id="year-sort">↕️</span></th>
+                                        <th scope="col">Actions</th>
                                     </tr>
                                 </thead>
                                 <tbody id="books-tbody">
@@ -155,7 +156,7 @@
             if (books.length === 0) {
                 tbody.innerHTML = `
                     <tr>
-                        <td colspan="6" class="text-center empty-state">
+                        <td colspan="7" class="text-center empty-state">
                             <div class="empty-state-icon">📚</div>
                             <em>No books found in the library.</em>
                         </td>
@@ -174,6 +175,11 @@
                     <td class="book-isbn">${book.isbn || 'N/A'}</td>
                     <td class="book-genre">${escapeHtml(book.genre || 'N/A')}</td>
                     <td class="book-year">${book.publication_year || 'N/A'}</td>
+                    <td>
+                        <button class="btn btn-danger btn-sm" onclick="deleteBook('${book.id}', '${escapeHtml(book.title)}')">
+                            🗑️ Delete
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(row);
             });
@@ -333,6 +339,37 @@
                 addBook(formData);
             });
         });
+
+        // Delete book functionality
+        async function deleteBook(bookId, bookTitle) {
+            // Show confirmation dialog
+            const confirmed = confirm(`Are you sure you want to delete "${bookTitle}"?\n\nThis action cannot be undone.`);
+            
+            if (!confirmed) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/books/${bookId}`, {
+                    method: 'DELETE'
+                });
+
+                if (response.status === 204) {
+                    // Success - reload books to show updated list
+                    loadBooks();
+                    
+                    // Show success message (you can enhance this with a better notification system)
+                    alert(`"${bookTitle}" has been successfully deleted from the library.`);
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.error || 'Failed to delete book');
+                }
+                
+            } catch (error) {
+                console.error('Error deleting book:', error);
+                alert(`Error deleting book: ${error.message}`);
+            }
+        }
 
         // Load books when page loads
         document.addEventListener('DOMContentLoaded', loadBooks);
