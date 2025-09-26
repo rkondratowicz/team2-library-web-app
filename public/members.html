@@ -383,11 +383,52 @@
         </div>
     </div>
 
+    <!-- Change Status Modal -->
+    <div class="modal fade" id="changeStatusModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">
+                        <i class="bi bi-pencil-square"></i> Change Member Status
+                    </h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Current Status: <span id="current-status-display" class="badge bg-secondary"></span></label>
+                    </div>
+                    <div class="mb-3">
+                        <label for="new-status-select" class="form-label">New Status</label>
+                        <select class="form-select" id="new-status-select" required>
+                            <option value="">Select new status...</option>
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                            <option value="suspended">Suspended</option>
+                        </select>
+                        <div class="form-text">
+                            <strong>Active:</strong> Member can borrow books<br>
+                            <strong>Inactive:</strong> Member account is disabled<br>
+                            <strong>Suspended:</strong> Member is temporarily restricted
+                        </div>
+                    </div>
+                    <div id="status-change-alert" class="alert d-none"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                    <button type="button" class="btn btn-primary" onclick="confirmStatusChange()" id="confirm-status-btn">
+                        <i class="bi bi-check-circle"></i> Update Status
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <script>
         // Global variables
         let allMembers = [];
         let currentView = 'card'; // 'card' or 'list'
         let selectedMemberId = null;
+        let statusChangeMemberId = null;
 
         // Initialize page
         document.addEventListener('DOMContentLoaded', function() {
@@ -1038,17 +1079,39 @@
             }
         }
 
-        async function changeStatus(memberId, currentStatus) {
-            const newStatus = prompt(`Change member status from "${currentStatus}" to:`, currentStatus);
-            if (!newStatus || newStatus === currentStatus) return;
+        function changeStatus(memberId, currentStatus) {
+            // Store the member ID for the confirmation
+            statusChangeMemberId = memberId;
             
-            if (!['active', 'inactive', 'suspended'].includes(newStatus)) {
-                alert('Status must be: active, inactive, or suspended');
+            // Set current status display
+            document.getElementById('current-status-display').textContent = currentStatus;
+            document.getElementById('current-status-display').className = `badge bg-${getStatusColor(currentStatus)}`;
+            
+            // Reset the form
+            document.getElementById('new-status-select').value = '';
+            document.getElementById('status-change-alert').classList.add('d-none');
+            
+            // Show the modal
+            const modal = new bootstrap.Modal(document.getElementById('changeStatusModal'));
+            modal.show();
+        }
+
+        async function confirmStatusChange() {
+            const newStatus = document.getElementById('new-status-select').value;
+            const alertDiv = document.getElementById('status-change-alert');
+            
+            if (!newStatus) {
+                showStatusAlert('Please select a new status.', 'danger');
                 return;
             }
             
+            // Disable the button during processing
+            const confirmBtn = document.getElementById('confirm-status-btn');
+            confirmBtn.disabled = true;
+            confirmBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status"></span> Updating...';
+            
             try {
-                const response = await fetch(`/api/members/${memberId}/status`, {
+                const response = await fetch(`/api/members/${statusChangeMemberId}/status`, {
                     method: 'PUT',
                     headers: {
                         'Content-Type': 'application/json'
@@ -1061,15 +1124,42 @@
                     throw new Error(error.error || 'Failed to update status');
                 }
                 
-                // Refresh members
+                // Show success message
+                showStatusAlert(`Status successfully updated to "${newStatus}"`, 'success');
+                
+                // Refresh data
                 await loadMembers();
                 await loadStatistics();
                 
-                alert(`Member status updated to "${newStatus}"`);
+                // Close modal after a delay
+                setTimeout(() => {
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('changeStatusModal'));
+                    modal.hide();
+                }, 1500);
                 
             } catch (error) {
-                console.error('Error updating status:', error);
-                alert(`Error updating status: ${error.message}`);
+                console.error('Error updating member status:', error);
+                showStatusAlert(`Error: ${error.message}`, 'danger');
+            } finally {
+                // Re-enable button
+                confirmBtn.disabled = false;
+                confirmBtn.innerHTML = '<i class="bi bi-check-circle"></i> Update Status';
+            }
+        }
+
+        function showStatusAlert(message, type) {
+            const alertDiv = document.getElementById('status-change-alert');
+            alertDiv.className = `alert alert-${type}`;
+            alertDiv.textContent = message;
+            alertDiv.classList.remove('d-none');
+        }
+
+        function getStatusColor(status) {
+            switch (status.toLowerCase()) {
+                case 'active': return 'success';
+                case 'inactive': return 'secondary';
+                case 'suspended': return 'danger';
+                default: return 'secondary';
             }
         }
 

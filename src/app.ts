@@ -99,6 +99,10 @@ app.get(
   transactionController.getAllActiveTransactions.bind(transactionController)
 );
 app.get(
+  '/api/transactions/search',
+  transactionController.searchActiveTransactions.bind(transactionController)
+);
+app.get(
   '/api/transactions/overdue',
   transactionController.getOverdueTransactions.bind(transactionController)
 );

@@ -295,6 +295,20 @@ export class TransactionController {
       }
     }
   }
+
+  // Search active transactions
+  async searchActiveTransactions(req: Request, res: Response): Promise<void> {
+    try {
+      const searchTerm = req.query.q as string;
+      const transactions = await transactionService.searchActiveTransactions(
+        searchTerm || ''
+      );
+      res.json(transactions);
+    } catch (error) {
+      console.error('Error searching active transactions:', error);
+      res.status(500).json({ error: 'Failed to search transactions' });
+    }
+  }
 }
 
 export const transactionController = new TransactionController();
