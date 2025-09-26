@@ -34,9 +34,9 @@ export class MemberService {
     // Handle international format - convert +44 to 0
     let normalizedPhone = cleanPhone;
     if (cleanPhone.startsWith('44') && cleanPhone.length === 12) {
-      normalizedPhone = '0' + cleanPhone.substring(2);
+      normalizedPhone = `0${cleanPhone.substring(2)}`;
     } else if (cleanPhone.startsWith('0044') && cleanPhone.length === 14) {
-      normalizedPhone = '0' + cleanPhone.substring(4);
+      normalizedPhone = `0${cleanPhone.substring(4)}`;
     }
 
     // Must be exactly 11 digits and start with 0
@@ -45,7 +45,7 @@ export class MemberService {
     }
 
     // Extract area code (first 2-5 digits after 0)
-    const areaCode = normalizedPhone.substring(0, 4); // First 4 digits for most specific checks
+    const _areaCode = normalizedPhone.substring(0, 4); // First 4 digits for most specific checks
     const threeDigit = normalizedPhone.substring(0, 3); // First 3 digits
     const twoDigit = normalizedPhone.substring(0, 2); // First 2 digits
 

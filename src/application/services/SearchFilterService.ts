@@ -133,7 +133,7 @@ class SearchFilterService {
       sortOrder = 'ASC',
       page = 1,
       limit = 20,
-      includeAnalytics = true,
+      includeAnalytics: _includeAnalytics = true,
     } = options;
 
     const offset = (page - 1) * limit;
@@ -355,7 +355,7 @@ class SearchFilterService {
       sortOrder = 'ASC',
       page = 1,
       limit = 20,
-      includeAnalytics = true,
+      includeAnalytics: _includeAnalytics = true,
     } = options;
 
     const offset = (page - 1) * limit;
@@ -604,7 +604,7 @@ class SearchFilterService {
       sortOrder = 'DESC',
       page = 1,
       limit = 20,
-      includeAnalytics = true,
+      includeAnalytics: _includeAnalytics = true,
     } = options;
 
     const offset = (page - 1) * limit;
@@ -902,7 +902,9 @@ class SearchFilterService {
     }
 
     const searchResults = await Promise.all(searchPromises);
-    searchResults.forEach((result) => Object.assign(results, result));
+    for (const result of searchResults) {
+      Object.assign(results, result);
+    }
 
     return results;
   }
