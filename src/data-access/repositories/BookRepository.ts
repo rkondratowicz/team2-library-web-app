@@ -42,8 +42,8 @@ export class BookRepository {
   async createBook(book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
     const id = crypto.randomUUID();
     const _result = await databaseConnection.run(
-      `INSERT INTO books (id, title, author, isbn, genre, publication_year, description) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO books (id, title, author, isbn, genre, publication_year, description, copies_available) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
         book.title,
@@ -52,6 +52,7 @@ export class BookRepository {
         book.genre,
         book.publication_year,
         book.description,
+        book.copies_available || 1,
       ]
     );
 
@@ -68,7 +69,7 @@ export class BookRepository {
   ): Promise<Book> {
     const result = await databaseConnection.run(
       `UPDATE books SET 
-       title = ?, author = ?, isbn = ?, genre = ?, publication_year = ?, description = ?
+       title = ?, author = ?, isbn = ?, genre = ?, publication_year = ?, description = ?, copies_available = ?
        WHERE id = ?`,
       [
         book.title,
@@ -77,6 +78,7 @@ export class BookRepository {
         book.genre,
         book.publication_year,
         book.description,
+        book.copies_available || 1,
         id,
       ]
     );

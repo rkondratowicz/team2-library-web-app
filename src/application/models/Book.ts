@@ -6,5 +6,6 @@ export interface Book {
   genre?: string;
   publication_year?: number;
   description?: string;
+  copies_available?: number;
   created_at?: string;
 }
