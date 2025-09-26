@@ -261,7 +261,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="phone" class="form-label">Phone</label>
-                            <input type="tel" class="form-control" id="phone">
+                            <input type="tel" class="form-control" id="phone" placeholder="e.g., 07123 456789, 020 7946 0958, or +44 7123 456789">
+                            <div class="form-text">UK phone numbers: Mobile (07xxx), London (020), Geographic (01xxx), or +44 format</div>
                         </div>
                         <div class="mb-3">
                             <label for="address" class="form-label">Address</label>
@@ -322,7 +323,8 @@
                         </div>
                         <div class="mb-3">
                             <label for="edit-phone" class="form-label">Phone</label>
-                            <input type="tel" class="form-control" id="edit-phone">
+                            <input type="tel" class="form-control" id="edit-phone" placeholder="e.g., 07123 456789, 020 7946 0958, or +44 7123 456789">
+                            <div class="form-text">UK phone numbers: Mobile (07xxx), London (020), Geographic (01xxx), or +44 format</div>
                         </div>
                         <div class="mb-3">
                             <label for="edit-address" class="form-label">Address</label>
@@ -444,6 +446,60 @@
             // Filter functionality
             document.getElementById('status-filter').addEventListener('change', filterMembers);
             document.getElementById('sort-by').addEventListener('change', sortMembers);
+        }
+
+        // UK phone number validation function - Completely robust
+        function validateUkPhoneNumber(phone) {
+            if (!phone || phone.trim() === '') return true; // Phone is optional
+            
+            // Remove all whitespace, hyphens, brackets, dots and plus signs for validation
+            const cleanPhone = phone.replace(/[\s\-().+]/g, '');
+            
+            // Handle international format - convert +44 to 0
+            let normalizedPhone = cleanPhone;
+            if (cleanPhone.startsWith('44') && cleanPhone.length === 12) {
+                normalizedPhone = '0' + cleanPhone.substring(2);
+            } else if (cleanPhone.startsWith('0044') && cleanPhone.length === 14) {
+                normalizedPhone = '0' + cleanPhone.substring(4);
+            }
+
+            // Must be exactly 11 digits and start with 0
+            if (!/^0\d{10}$/.test(normalizedPhone)) {
+                return false;
+            }
+
+            // Extract prefixes for validation
+            const twoDigit = normalizedPhone.substring(0, 2);
+            const threeDigit = normalizedPhone.substring(0, 3);
+
+            // Mobile numbers: 07xxx xxxxxx
+            if (twoDigit === '07') {
+                // Valid mobile prefixes: 070x-075x, 077x-079x
+                const mobilePrefix = normalizedPhone.substring(0, 3);
+                return /^07[0-5789]/.test(mobilePrefix);
+            }
+
+            // London numbers: 020 xxxx xxxx
+            if (threeDigit === '020') {
+                return true;
+            }
+
+            // Geographic area codes: 01xxx xxxxxx
+            if (twoDigit === '01') {
+                return /^01\d{9}$/.test(normalizedPhone);
+            }
+
+            // Non-geographic numbers: 03xx xxx xxxx
+            if (twoDigit === '03') {
+                return /^03\d{9}$/.test(normalizedPhone);
+            }
+
+            // Special services (08xx, 09xx)
+            if (twoDigit === '08' || twoDigit === '09') {
+                return /^0[89]\d{9}$/.test(normalizedPhone);
+            }
+
+            return false;
         }
 
         // Load all members
@@ -781,6 +837,12 @@
                     return;
                 }
                 
+                // Phone validation
+                if (phone && !validateUkPhoneNumber(phone)) {
+                    showAddError('Please enter a valid UK phone number (e.g., 07123 456789, 020 7946 0958, 01234 567890, or +44 format).');
+                    return;
+                }
+                
                 const memberData = {
                     first_name: firstName,
                     last_name: lastName,
@@ -875,6 +937,12 @@
                 // Validation
                 if (!firstName || !lastName || !email) {
                     showEditError('First name, last name, and email are required.');
+                    return;
+                }
+                
+                // Phone validation
+                if (phone && !validateUkPhoneNumber(phone)) {
+                    showEditError('Please enter a valid UK phone number (e.g., 07123 456789, 020 7946 0958, 01234 567890, or +44 format).');
                     return;
                 }
                 
