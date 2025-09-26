@@ -10,11 +10,19 @@ import { databaseConnection } from '../DatabaseConnection.js';
 export class MemberRepository {
   /**
    * Retrieve all members ordered by registration date (newest first)
+   * Includes active borrowing count for each member
    */
   async getAllMembers(): Promise<Member[]> {
-    const rows = await databaseConnection.all(
-      'SELECT * FROM members ORDER BY created_at DESC'
-    );
+    const query = `
+      SELECT 
+        m.*,
+        COUNT(CASE WHEN bt.status = 'Active' THEN 1 END) as active_borrows
+      FROM members m
+      LEFT JOIN borrowing_transactions bt ON m.member_id = bt.member_id
+      GROUP BY m.id
+      ORDER BY m.created_at DESC
+    `;
+    const rows = await databaseConnection.all(query);
     return rows as Member[];
   }
 
@@ -265,6 +273,34 @@ export class MemberRepository {
     // Format with leading zeros (e.g., 001, 002, etc.)
     const formattedNumber = nextNumber.toString().padStart(3, '0');
     return `${prefix}${formattedNumber}`;
+  }
+
+  /**
+   * Get count of members with active borrows
+   */
+  async getMembersWithActiveBorrowsCount(): Promise<number> {
+    const query = `
+      SELECT COUNT(DISTINCT m.id) as count
+      FROM members m
+      INNER JOIN borrowing_transactions bt ON m.member_id = bt.member_id
+      WHERE bt.status = 'Active'
+    `;
+    const result = await databaseConnection.getOne(query);
+    return (result as { count: number })?.count || 0;
+  }
+
+  /**
+   * Get count of members with overdue borrows
+   */
+  async getMembersWithOverdueCount(): Promise<number> {
+    const query = `
+      SELECT COUNT(DISTINCT m.id) as count
+      FROM members m
+      INNER JOIN borrowing_transactions bt ON m.member_id = bt.member_id
+      WHERE bt.status = 'Active' AND date(bt.due_date) < date('now')
+    `;
+    const result = await databaseConnection.getOne(query);
+    return (result as { count: number })?.count || 0;
   }
 }
 

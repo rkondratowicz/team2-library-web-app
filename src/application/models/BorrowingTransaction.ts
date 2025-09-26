@@ -60,7 +60,7 @@ export interface MemberBorrowingSummary {
   active_borrows_count: number;
   total_borrows_count: number;
   overdue_count: number;
-  active_transactions: BorrowingTransaction[];
+  active_transactions: BorrowingTransactionWithDetails[];
 }
 
 export interface BookBorrowingStats {

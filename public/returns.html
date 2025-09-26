@@ -226,7 +226,7 @@
                 const isOverdue = dueDate < new Date();
                 
                 row.innerHTML = `
-                    <td><span class="transaction-id">${transaction.transaction_id}</span></td>
+                    <td><span class="transaction-id">${transaction.id}</span></td>
                     <td>
                         <div>
                             <strong>${escapeHtml(transaction.member_name)}</strong>
@@ -249,7 +249,7 @@
                         <span class="badge bg-${isOverdue ? 'danger' : 'success'}">${transaction.status}</span>
                     </td>
                     <td>
-                        <button class="btn btn-outline-primary btn-sm" onclick="initiateReturn('${transaction.transaction_id}')">
+                        <button class="btn btn-outline-primary btn-sm" onclick="initiateReturn('${transaction.id}')">
                             ↩️ Return
                         </button>
                     </td>
@@ -259,28 +259,37 @@
             });
         }
         
-        function searchTransactions() {
-            const searchTerm = document.getElementById('search-transactions').value.toLowerCase().trim();
-            
-            if (!searchTerm) {
-                renderTransactions(transactionsCache);
-                return;
+        async function searchTransactions(searchTerm) {
+            try {
+                const url = searchTerm 
+                    ? `/api/transactions/search?q=${encodeURIComponent(searchTerm)}`
+                    : '/api/transactions/active';
+                    
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const transactions = await response.json();
+                
+                // Update cache with search results
+                transactionsCache = transactions;
+                
+                // Render search results
+                renderTransactions(transactions);
+                
+                // Update stats for search results
+                document.getElementById('active-transactions').textContent = transactions.length;
+                
+            } catch (error) {
+                console.error('Error searching transactions:', error);
+                const errorDiv = document.getElementById('error');
+                errorDiv.textContent = `Error searching transactions: ${error.message}`;
+                errorDiv.classList.remove('d-none');
             }
-            
-            const filteredTransactions = transactionsCache.filter(transaction => 
-                transaction.member_name.toLowerCase().includes(searchTerm) ||
-                transaction.member_id.toLowerCase().includes(searchTerm) ||
-                transaction.book_title.toLowerCase().includes(searchTerm) ||
-                transaction.book_author.toLowerCase().includes(searchTerm) ||
-                transaction.copy_number.toLowerCase().includes(searchTerm) ||
-                transaction.transaction_id.toLowerCase().includes(searchTerm)
-            );
-            
-            renderTransactions(filteredTransactions);
         }
         
         function initiateReturn(transactionId) {
-            const transaction = transactionsCache.find(t => t.transaction_id === transactionId);
+            const transaction = transactionsCache.find(t => t.id === transactionId);
             if (!transaction) {
                 alert('Transaction not found');
                 return;
@@ -371,12 +380,19 @@
             }
         }
         
-        // Search functionality with debouncing
+        // Search functionality with debouncing (matching books page behavior)
         let searchTimeout;
         document.addEventListener('DOMContentLoaded', () => {
-            document.getElementById('search-transactions').addEventListener('input', () => {
+            document.getElementById('search-transactions').addEventListener('input', (e) => {
+                const searchTerm = e.target.value.trim();
+                
+                // Clear previous timeout
                 clearTimeout(searchTimeout);
-                searchTimeout = setTimeout(searchTransactions, 300);
+                
+                // Debounce search - wait 300ms after user stops typing
+                searchTimeout = setTimeout(() => {
+                    searchTransactions(searchTerm);
+                }, 300);
             });
         });
 
