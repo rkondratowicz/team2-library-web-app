@@ -40,10 +40,13 @@ export class BookRepository {
   }
 
   async createBook(book: Omit<Book, 'id' | 'created_at'>): Promise<Book> {
+    const id = crypto.randomUUID();
+    
     const result = await databaseConnection.run(
-      `INSERT INTO books (title, author, isbn, genre, publication_year, description, copies_available) 
-       VALUES (?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO books (id, title, author, isbn, genre, publication_year, description, copies_available) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
+        id,
         book.title,
         book.author,
         book.isbn,
@@ -54,7 +57,7 @@ export class BookRepository {
       ]
     );
 
-    const createdBook = await this.getBookById(result.lastID.toString());
+    const createdBook = await this.getBookById(id);
     if (!createdBook) {
       throw new Error('Failed to retrieve created book');
     }
