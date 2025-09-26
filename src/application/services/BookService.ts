@@ -75,13 +75,16 @@ export class BookService {
         book_id: newBook.id,
         copy_number: i.toString().padStart(3, '0'), // e.g., "001", "002", etc.
         status: 'Available',
-        acquisition_date: new Date().toISOString().split('T')[0]
+        acquisition_date: new Date().toISOString().split('T')[0],
       };
-      
+
       try {
         await bookRepository.createCopy(copyData);
       } catch (error) {
-        console.error(`Failed to create copy ${i} for book ${newBook.id}:`, error);
+        console.error(
+          `Failed to create copy ${i} for book ${newBook.id}:`,
+          error
+        );
         // Continue creating other copies even if one fails
       }
     }
