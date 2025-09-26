@@ -2,10 +2,10 @@ import { databaseConnection } from '../../data-access/DatabaseConnection.js';
 
 /**
  * Book Popularity Service
- * 
+ *
  * Analyzes book popularity and provides insights into:
  * - Which books are most/least popular based on borrowing frequency
- * - Popularity trends over time periods  
+ * - Popularity trends over time periods
  * - Book recommendation analytics
  * - Genre popularity analysis
  * - Seasonal borrowing patterns
@@ -74,16 +74,22 @@ export interface PopularityFilters {
   endDate?: string;
   limit?: number;
   offset?: number;
-  sortBy?: 'popularity_score' | 'total_borrows' | 'unique_borrowers' | 'title' | 'last_borrowed_date';
+  sortBy?:
+    | 'popularity_score'
+    | 'total_borrows'
+    | 'unique_borrowers'
+    | 'title'
+    | 'last_borrowed_date';
   sortOrder?: 'ASC' | 'DESC';
 }
 
 export class BookPopularityService {
-  
   /**
    * Get most popular books based on borrowing frequency and engagement
    */
-  async getMostPopularBooks(filters?: PopularityFilters): Promise<BookPopularityRecord[]> {
+  async getMostPopularBooks(
+    filters?: PopularityFilters
+  ): Promise<BookPopularityRecord[]> {
     const query = `
       SELECT 
         b.id as book_id,
@@ -152,69 +158,71 @@ export class BookPopularityService {
       LEFT JOIN borrowing_transactions bt ON bc.id = bt.book_copy_id
       WHERE 1=1
     `;
-    
-    let whereConditions: string[] = [];
-    let params: any[] = [];
-    
+
+    const whereConditions: string[] = [];
+    const params: any[] = [];
+
     if (filters) {
       if (filters.genre) {
-        whereConditions.push("b.genre = ?");
+        whereConditions.push('b.genre = ?');
         params.push(filters.genre);
       }
-      
+
       if (filters.publicationYearFrom) {
-        whereConditions.push("b.publication_year >= ?");
+        whereConditions.push('b.publication_year >= ?');
         params.push(filters.publicationYearFrom);
       }
-      
+
       if (filters.publicationYearTo) {
-        whereConditions.push("b.publication_year <= ?");
+        whereConditions.push('b.publication_year <= ?');
         params.push(filters.publicationYearTo);
       }
-      
+
       if (filters.startDate && filters.endDate) {
-        whereConditions.push("bt.borrow_date BETWEEN ? AND ?");
+        whereConditions.push('bt.borrow_date BETWEEN ? AND ?');
         params.push(filters.startDate, filters.endDate);
       }
     }
-    
+
     let finalQuery = query;
     if (whereConditions.length > 0) {
-      finalQuery += " AND " + whereConditions.join(" AND ");
+      finalQuery += ' AND ' + whereConditions.join(' AND ');
     }
-    
-    finalQuery += " GROUP BY b.id, b.title, b.author, b.isbn, b.genre, b.publication_year";
-    
+
+    finalQuery +=
+      ' GROUP BY b.id, b.title, b.author, b.isbn, b.genre, b.publication_year';
+
     // Apply post-aggregation filters
-    let havingConditions: string[] = [];
+    const havingConditions: string[] = [];
     if (filters?.minBorrows) {
-      havingConditions.push("COUNT(bt.id) >= ?");
+      havingConditions.push('COUNT(bt.id) >= ?');
       params.push(filters.minBorrows);
     }
-    
+
     if (filters?.maxBorrows) {
-      havingConditions.push("COUNT(bt.id) <= ?");
+      havingConditions.push('COUNT(bt.id) <= ?');
       params.push(filters.maxBorrows);
     }
-    
+
     if (havingConditions.length > 0) {
-      finalQuery += " HAVING " + havingConditions.join(" AND ");
+      finalQuery += ' HAVING ' + havingConditions.join(' AND ');
     }
-    
+
     // Sorting
     const sortBy = filters?.sortBy || 'popularity_score';
     const sortOrder = filters?.sortOrder || 'DESC';
-    
-    const sortColumn = {
-      'popularity_score': 'popularity_score',
-      'total_borrows': 'total_borrows',
-      'unique_borrowers': 'unique_borrowers',
-      'title': 'b.title',
-      'last_borrowed_date': 'last_borrowed_date'
-    }[sortBy] || 'popularity_score';
-    
+
+    const sortColumn =
+      {
+        popularity_score: 'popularity_score',
+        total_borrows: 'total_borrows',
+        unique_borrowers: 'unique_borrowers',
+        title: 'b.title',
+        last_borrowed_date: 'last_borrowed_date',
+      }[sortBy] || 'popularity_score';
+
     finalQuery += ` ORDER BY ${sortColumn} ${sortOrder}`;
-    
+
     // Pagination
     if (filters?.limit) {
       finalQuery += ` LIMIT ${filters.limit}`;
@@ -222,24 +230,29 @@ export class BookPopularityService {
         finalQuery += ` OFFSET ${filters.offset}`;
       }
     }
-    
-    return await databaseConnection.all(finalQuery, params) as BookPopularityRecord[];
+
+    return (await databaseConnection.all(
+      finalQuery,
+      params
+    )) as BookPopularityRecord[];
   }
-  
+
   /**
    * Get least popular books (books that are rarely borrowed)
    */
-  async getLeastPopularBooks(filters?: PopularityFilters): Promise<BookPopularityRecord[]> {
+  async getLeastPopularBooks(
+    filters?: PopularityFilters
+  ): Promise<BookPopularityRecord[]> {
     // Use the same query but with ASC order by default
     const modifiedFilters = {
       ...filters,
       sortBy: filters?.sortBy || 'popularity_score',
-      sortOrder: 'ASC' as const
+      sortOrder: 'ASC' as const,
     };
-    
+
     return this.getMostPopularBooks(modifiedFilters);
   }
-  
+
   /**
    * Get books that have never been borrowed
    */
@@ -269,10 +282,10 @@ export class BookPopularityService {
       GROUP BY b.id, b.title, b.author, b.isbn, b.genre, b.publication_year
       ORDER BY b.title ASC
     `;
-    
-    return await databaseConnection.all(query, []) as BookPopularityRecord[];
+
+    return (await databaseConnection.all(query, [])) as BookPopularityRecord[];
   }
-  
+
   /**
    * Get genre popularity rankings
    */
@@ -316,10 +329,10 @@ export class BookPopularityService {
       LEFT JOIN genre_top_books gtb ON gs.genre = gtb.genre
       ORDER BY gs.total_borrows DESC, gs.average_borrows_per_book DESC
     `;
-    
-    return await databaseConnection.all(query, []) as GenrePopularityRecord[];
+
+    return (await databaseConnection.all(query, [])) as GenrePopularityRecord[];
   }
-  
+
   /**
    * Get popularity trends for a specific book over time
    */
@@ -330,12 +343,12 @@ export class BookPopularityService {
     periodType: 'daily' | 'weekly' | 'monthly' | 'yearly' = 'monthly'
   ): Promise<PopularityTrend[]> {
     const dateFormat = {
-      'daily': '%Y-%m-%d',
-      'weekly': '%Y-W%W',
-      'monthly': '%Y-%m',
-      'yearly': '%Y'
+      daily: '%Y-%m-%d',
+      weekly: '%Y-W%W',
+      monthly: '%Y-%m',
+      yearly: '%Y',
     }[periodType];
-    
+
     const query = `
       SELECT 
         strftime('${dateFormat}', bt.borrow_date) as period,
@@ -356,14 +369,21 @@ export class BookPopularityService {
       GROUP BY strftime('${dateFormat}', bt.borrow_date), b.id, b.title, b.author
       ORDER BY period ASC
     `;
-    
-    return await databaseConnection.all(query, [bookId, startDate, endDate]) as PopularityTrend[];
+
+    return (await databaseConnection.all(query, [
+      bookId,
+      startDate,
+      endDate,
+    ])) as PopularityTrend[];
   }
-  
+
   /**
    * Get book recommendations based on borrowing patterns
    */
-  async getBookRecommendations(bookId: number, limit: number = 10): Promise<BookRecommendation[]> {
+  async getBookRecommendations(
+    bookId: number,
+    limit: number = 10
+  ): Promise<BookRecommendation[]> {
     const query = `
       WITH book_borrowers AS (
         -- Get all members who borrowed the target book
@@ -425,27 +445,36 @@ export class BookPopularityService {
       ORDER BY similarity_score DESC
       LIMIT ?
     `;
-    
-    return await databaseConnection.all(query, [bookId, bookId, bookId, bookId, limit]) as BookRecommendation[];
+
+    return (await databaseConnection.all(query, [
+      bookId,
+      bookId,
+      bookId,
+      bookId,
+      limit,
+    ])) as BookRecommendation[];
   }
-  
+
   /**
    * Get trending books (recently popular)
    */
-  async getTrendingBooks(daysBack: number = 30, limit: number = 20): Promise<BookPopularityRecord[]> {
+  async getTrendingBooks(
+    daysBack: number = 30,
+    limit: number = 20
+  ): Promise<BookPopularityRecord[]> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - daysBack);
     const startDateString = startDate.toISOString().split('T')[0];
-    
+
     const filters: PopularityFilters = {
       startDate: startDateString,
       endDate: new Date().toISOString().split('T')[0],
       limit,
       sortBy: 'popularity_score',
       sortOrder: 'DESC',
-      minBorrows: 1 // Only include books that have been borrowed
+      minBorrows: 1, // Only include books that have been borrowed
     };
-    
+
     return this.getMostPopularBooks(filters);
   }
 }
