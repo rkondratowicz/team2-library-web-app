@@ -3,9 +3,11 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import { databaseConnection } from './data-access/DatabaseConnection.js';
 import { bookController } from './presentation/controllers/BookController.js';
+import { dashboardController } from './presentation/controllers/DashboardController.js';
 import { memberController } from './presentation/controllers/MemberController.js';
 import { rentalController } from './presentation/controllers/RentalController.js';
 import { transactionController } from './presentation/controllers/TransactionController.js';
+import searchRoutes from './presentation/routes/searchRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -177,6 +179,39 @@ app.get(
   rentalController.getOverdueRentals.bind(rentalController)
 );
 
+// Dashboard API routes
+app.get(
+  '/api/dashboard/overview',
+  dashboardController.getDashboardOverview.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/widgets',
+  dashboardController.getDashboardWidgets.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/widgets/:widgetId',
+  dashboardController.getDashboardWidget.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/alerts',
+  dashboardController.getSystemAlerts.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/actions',
+  dashboardController.getQuickActions.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/metrics',
+  dashboardController.getPerformanceMetrics.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/reports/:reportType',
+  dashboardController.generateDashboardReport.bind(dashboardController)
+);
+
+// Search API routes - Task 9
+app.use('/api/search', searchRoutes);
+
 // Initialize database and start server
 async function startServer() {
   try {
@@ -195,6 +230,12 @@ async function startServer() {
       );
       console.log(
         `Rentals API available at http://localhost:${PORT}/api/rentals`
+      );
+      console.log(
+        `Dashboard API available at http://localhost:${PORT}/api/dashboard`
+      );
+      console.log(
+        `Search API available at http://localhost:${PORT}/api/search`
       );
     });
   } catch (error) {

@@ -107,7 +107,9 @@ export class RentalAnalyticsService {
     return rows.map((row: unknown) => ({
       ...(row as Record<string, unknown>),
       is_overdue: Boolean((row as Record<string, unknown>).is_overdue),
-      days_overdue: (row as Record<string, unknown>).days_overdue ? Math.ceil(Number((row as Record<string, unknown>).days_overdue)) : null,
+      days_overdue: (row as Record<string, unknown>).days_overdue
+        ? Math.ceil(Number((row as Record<string, unknown>).days_overdue))
+        : null,
     })) as MemberBorrowRecord[];
   }
 

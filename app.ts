@@ -7,6 +7,7 @@ import { memberController } from './src/presentation/controllers/MemberControlle
 import { rentalController } from './src/presentation/controllers/RentalController.js';
 import { transactionController } from './src/presentation/controllers/TransactionController.js';
 import { dashboardController } from './src/presentation/controllers/DashboardController.js';
+import searchRoutes from './src/presentation/routes/searchRoutes.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -204,6 +205,9 @@ app.get(
   dashboardController.generateDashboardReport.bind(dashboardController)
 );
 
+// Search API routes - Task 9
+app.use('/api/search', searchRoutes);
+
 // Initialize database and start server
 async function startServer() {
   try {
@@ -225,6 +229,9 @@ async function startServer() {
       );
       console.log(
         `Dashboard API available at http://localhost:${PORT}/api/dashboard`
+      );
+      console.log(
+        `Search API available at http://localhost:${PORT}/api/search`
       );
     });
   } catch (error) {
