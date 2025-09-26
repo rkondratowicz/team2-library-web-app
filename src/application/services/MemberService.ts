@@ -273,6 +273,20 @@ export class MemberService {
     const members = await this.memberRepository.getAllMembers();
     return members.length;
   }
+
+  /**
+   * Get count of members with active borrows
+   */
+  async getMembersWithActiveBorrowsCount(): Promise<number> {
+    return await this.memberRepository.getMembersWithActiveBorrowsCount();
+  }
+
+  /**
+   * Get count of members with overdue borrows
+   */
+  async getMembersWithOverdueCount(): Promise<number> {
+    return await this.memberRepository.getMembersWithOverdueCount();
+  }
 }
 
 // Create and export member service instance

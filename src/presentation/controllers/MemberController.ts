@@ -241,12 +241,16 @@ export class MemberController {
     try {
       const totalCount = await memberService.getTotalMemberCount();
       const statusCounts = await memberService.getMemberCountByStatus();
+      const membersWithActiveBorrows = await memberService.getMembersWithActiveBorrowsCount();
+      const membersWithOverdue = await memberService.getMembersWithOverdueCount();
 
       const statistics = {
         total_members: totalCount,
         active_members: statusCounts[MemberStatus.ACTIVE],
         inactive_members: statusCounts[MemberStatus.INACTIVE],
         suspended_members: statusCounts[MemberStatus.SUSPENDED],
+        members_with_active_borrows: membersWithActiveBorrows,
+        members_with_overdue: membersWithOverdue,
       };
 
       res.json(statistics);

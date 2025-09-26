@@ -274,6 +274,34 @@ export class MemberRepository {
     const formattedNumber = nextNumber.toString().padStart(3, '0');
     return `${prefix}${formattedNumber}`;
   }
+
+  /**
+   * Get count of members with active borrows
+   */
+  async getMembersWithActiveBorrowsCount(): Promise<number> {
+    const query = `
+      SELECT COUNT(DISTINCT m.id) as count
+      FROM members m
+      INNER JOIN borrowing_transactions bt ON m.member_id = bt.member_id
+      WHERE bt.status = 'Active'
+    `;
+    const result = await databaseConnection.getOne(query);
+    return (result as { count: number })?.count || 0;
+  }
+
+  /**
+   * Get count of members with overdue borrows
+   */
+  async getMembersWithOverdueCount(): Promise<number> {
+    const query = `
+      SELECT COUNT(DISTINCT m.id) as count
+      FROM members m
+      INNER JOIN borrowing_transactions bt ON m.member_id = bt.member_id
+      WHERE bt.status = 'Active' AND date(bt.due_date) < date('now')
+    `;
+    const result = await databaseConnection.getOne(query);
+    return (result as { count: number })?.count || 0;
+  }
 }
 
 export const memberRepository = new MemberRepository();
