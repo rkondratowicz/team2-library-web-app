@@ -235,7 +235,7 @@ export class OverdueAnalyticsService {
     `;
 
     const whereConditions: string[] = [];
-    const params: any[] = [
+    const params: (string | number)[] = [
       this.defaultGraceConfig.grace_period_days,
       this.defaultGraceConfig.grace_period_days,
       this.defaultGraceConfig.grace_period_days,
@@ -290,7 +290,7 @@ export class OverdueAnalyticsService {
       }
 
       if (whereConditions.length > 0) {
-        finalQuery += ' AND ' + whereConditions.join(' AND ');
+        finalQuery += ` AND ${whereConditions.join(' AND ')}`;
       }
     }
 
@@ -407,7 +407,7 @@ export class OverdueAnalyticsService {
    */
   async analyzeOverduePatterns(
     memberId?: string,
-    includeHistory: boolean = true
+    _includeHistory: boolean = true
   ): Promise<OverduePattern[]> {
     const query = `
       WITH member_transactions AS (

@@ -160,7 +160,7 @@ export class BookPopularityService {
     `;
 
     const whereConditions: string[] = [];
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (filters) {
       if (filters.genre) {
@@ -186,7 +186,7 @@ export class BookPopularityService {
 
     let finalQuery = query;
     if (whereConditions.length > 0) {
-      finalQuery += ' AND ' + whereConditions.join(' AND ');
+      finalQuery += ` AND ${whereConditions.join(' AND ')}`;
     }
 
     finalQuery +=
@@ -205,7 +205,7 @@ export class BookPopularityService {
     }
 
     if (havingConditions.length > 0) {
-      finalQuery += ' HAVING ' + havingConditions.join(' AND ');
+      finalQuery += ` HAVING ${havingConditions.join(' AND ')}`;
     }
 
     // Sorting

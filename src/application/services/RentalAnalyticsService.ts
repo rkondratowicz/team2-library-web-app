@@ -1,7 +1,6 @@
 import { databaseConnection } from '../../data-access/DatabaseConnection.js';
 import type { Book } from '../models/Book.js';
-import type { BorrowingTransaction } from '../models/BorrowingTransaction.js';
-import type { Member, MemberStatus } from '../models/Member.js';
+import type { MemberStatus } from '../models/Member.js';
 
 /**
  * Rental Analytics Service
@@ -105,10 +104,10 @@ export class RentalAnalyticsService {
 
     const rows = await databaseConnection.all(query, [bookId]);
 
-    return rows.map((row: any) => ({
-      ...row,
-      is_overdue: Boolean(row.is_overdue),
-      days_overdue: row.days_overdue ? Math.ceil(row.days_overdue) : null,
+    return rows.map((row: unknown) => ({
+      ...(row as Record<string, unknown>),
+      is_overdue: Boolean((row as Record<string, unknown>).is_overdue),
+      days_overdue: (row as Record<string, unknown>).days_overdue ? Math.ceil(Number((row as Record<string, unknown>).days_overdue)) : null,
     })) as MemberBorrowRecord[];
   }
 
@@ -295,7 +294,7 @@ export class RentalAnalyticsService {
     } = {}
   ): Promise<MemberBookAssociation[]> {
     const whereConditions: string[] = [];
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (options.memberId) {
       whereConditions.push('m.id = ?');

@@ -226,7 +226,7 @@ export class RentalHistoryRepository {
 
     let finalQuery = baseQuery;
     if (whereConditions.length > 0) {
-      finalQuery += ' AND ' + whereConditions.join(' AND ');
+      finalQuery += ` AND ${whereConditions.join(' AND ')}`;
     }
 
     // Add sorting
@@ -338,7 +338,7 @@ export class RentalHistoryRepository {
 
     let finalQuery = baseQuery;
     if (whereConditions.length > 0) {
-      finalQuery += ' AND ' + whereConditions.join(' AND ');
+      finalQuery += ` AND ${whereConditions.join(' AND ')}`;
     }
 
     // Add sorting and pagination
@@ -563,7 +563,7 @@ export class RentalHistoryRepository {
     // Build final query
     let finalQuery = baseQuery;
     if (whereConditions.length > 0) {
-      finalQuery += ' AND ' + whereConditions.join(' AND ');
+      finalQuery += ` AND ${whereConditions.join(' AND ')}`;
     }
 
     // Add sorting

@@ -1,17 +1,16 @@
-import { Request, Response } from 'express';
-import { rentalAnalyticsService } from '../../application/services/RentalAnalyticsService.js';
+import type { Request, Response } from 'express';
 import { bookPopularityService } from '../../application/services/BookPopularityService.js';
 import { memberBehaviorService } from '../../application/services/MemberBehaviorService.js';
 import { overdueAnalyticsService } from '../../application/services/OverdueAnalyticsService.js';
+import { rentalAnalyticsService } from '../../application/services/RentalAnalyticsService.js';
 import { rentalReportsService } from '../../application/services/RentalReportsService.js';
-import { rentalHistoryRepository } from '../../data-access/repositories/RentalHistoryRepository.js';
 
 /**
  * Dashboard Controller
  *
  * Provides real-time dashboard endpoints that aggregate data from all analytics services.
  * Designed to support library management dashboards with:
- * 
+ *
  * - Real-time overview metrics and key performance indicators
  * - Interactive widgets for different aspects of library operations
  * - Alert and notification systems for immediate attention items
@@ -55,11 +54,11 @@ export interface DashboardWidget {
   priority: 'low' | 'medium' | 'high' | 'critical';
 }
 
-export type WidgetType = 
+export type WidgetType =
   | 'summary_stats'
   | 'popular_books'
   | 'member_activity'
-  | 'overdue_alerts' 
+  | 'overdue_alerts'
   | 'trending_genres'
   | 'system_alerts'
   | 'recent_transactions'
@@ -107,33 +106,46 @@ export class DashboardController {
   /**
    * Get comprehensive dashboard overview with all key metrics
    */
-  async getDashboardOverview(req: Request, res: Response): Promise<void> {
+  async getDashboardOverview(_req: Request, res: Response): Promise<void> {
     try {
       const [
         rentalStats,
         overdueStats,
-        memberSegments,
-        popularBooks,
-        recentTrends
+        _memberSegments,
+        _popularBooks,
+        _recentTrends,
       ] = await Promise.all([
         rentalAnalyticsService.getRentalStatistics(),
         overdueAnalyticsService.getOverdueSummary(),
         memberBehaviorService.getMemberSegments(),
         bookPopularityService.getMostPopularBooks({ limit: 5 }),
-        overdueAnalyticsService.getOverdueTrends('daily', undefined, undefined, 7)
+        overdueAnalyticsService.getOverdueTrends(
+          'daily',
+          undefined,
+          undefined,
+          7
+        ),
       ]);
 
       // Calculate additional metrics
       const totalBooks = await this.getTotalBooksCount();
       const totalMembers = await this.getTotalMembersCount();
       const booksAvailable = totalBooks - rentalStats.active_rentals;
-      
+
       // Calculate performance indicators
       const circulationRate = rentalStats.total_transactions / 30; // Daily average
-      const memberEngagementRate = (rentalStats.unique_borrowers / totalMembers) * 100;
-      const collectionUtilizationRate = (rentalStats.unique_books_borrowed / totalBooks) * 100;
-      const onTimeReturnRate = Math.max(0, 100 - (overdueStats as any).overdue_rate);
-      const systemHealthScore = this.calculateSystemHealth(rentalStats, overdueStats);
+      const memberEngagementRate =
+        (rentalStats.unique_borrowers / totalMembers) * 100;
+      const collectionUtilizationRate =
+        (rentalStats.unique_books_borrowed / totalBooks) * 100;
+      const onTimeReturnRate = Math.max(
+        0,
+        100 - (overdueStats as any).overdue_rate
+      );
+      const systemHealthScore = this.calculateSystemHealth(
+        rentalStats,
+        overdueStats
+      );
 
       const dashboardMetrics: DashboardMetrics = {
         timestamp: new Date().toISOString(),
@@ -143,21 +155,22 @@ export class DashboardController {
           total_active_loans: rentalStats.active_rentals,
           books_available: booksAvailable,
           overdue_books: (overdueStats as any).current_overdue_count || 0,
-          daily_circulation: Math.round(circulationRate * 10) / 10
+          daily_circulation: Math.round(circulationRate * 10) / 10,
         },
         performance_indicators: {
           circulation_rate: Math.round(circulationRate * 100) / 100,
           member_engagement_rate: Math.round(memberEngagementRate * 100) / 100,
-          collection_utilization_rate: Math.round(collectionUtilizationRate * 100) / 100,
+          collection_utilization_rate:
+            Math.round(collectionUtilizationRate * 100) / 100,
           on_time_return_rate: Math.round(onTimeReturnRate * 100) / 100,
-          system_health_score: systemHealthScore
+          system_health_score: systemHealthScore,
         },
         recent_activity: {
           books_borrowed_today: await this.getBooksActivityToday('borrowed'),
           books_returned_today: await this.getBooksActivityToday('returned'),
           new_members_today: await this.getNewMembersToday(),
-          overdue_notifications_sent: await this.getOverdueNotificationsToday()
-        }
+          overdue_notifications_sent: await this.getOverdueNotificationsToday(),
+        },
       };
 
       res.json(dashboardMetrics);
@@ -170,7 +183,7 @@ export class DashboardController {
   /**
    * Get all dashboard widgets with their current data
    */
-  async getDashboardWidgets(req: Request, res: Response): Promise<void> {
+  async getDashboardWidgets(_req: Request, res: Response): Promise<void> {
     try {
       const widgets: DashboardWidget[] = [
         await this.getSummaryStatsWidget(),
@@ -181,7 +194,7 @@ export class DashboardController {
         await this.getSystemAlertsWidget(),
         await this.getRecentTransactionsWidget(),
         await this.getMemberSegmentsWidget(),
-        await this.getFinancialSummaryWidget()
+        await this.getFinancialSummaryWidget(),
       ];
 
       res.json({ widgets, last_updated: new Date().toISOString() });
@@ -197,9 +210,9 @@ export class DashboardController {
   async getDashboardWidget(req: Request, res: Response): Promise<void> {
     try {
       const { widgetId } = req.params;
-      
+
       let widget: DashboardWidget;
-      
+
       switch (widgetId) {
         case 'summary_stats':
           widget = await this.getSummaryStatsWidget();
@@ -232,7 +245,7 @@ export class DashboardController {
           res.status(404).json({ error: 'Widget not found' });
           return;
       }
-      
+
       res.json(widget);
     } catch (error) {
       console.error('Error fetching dashboard widget:', error);
@@ -243,7 +256,7 @@ export class DashboardController {
   /**
    * Get system alerts and notifications
    */
-  async getSystemAlerts(req: Request, res: Response): Promise<void> {
+  async getSystemAlerts(_req: Request, res: Response): Promise<void> {
     try {
       const alerts: SystemAlert[] = await this.generateSystemAlerts();
       res.json({ alerts, count: alerts.length });
@@ -256,13 +269,14 @@ export class DashboardController {
   /**
    * Get quick actions available to the user
    */
-  async getQuickActions(req: Request, res: Response): Promise<void> {
+  async getQuickActions(_req: Request, res: Response): Promise<void> {
     try {
-      const [overdueCount, atRiskMembers, reportsAvailable] = await Promise.all([
-        this.getOverdueCount(),
-        this.getAtRiskMembersCount(),
-        this.getAvailableReportsCount()
-      ]);
+      const [overdueCount, atRiskMembers, _reportsAvailable] =
+        await Promise.all([
+          this.getOverdueCount(),
+          this.getAtRiskMembersCount(),
+          this.getAvailableReportsCount(),
+        ]);
 
       const quickActions: QuickAction[] = [
         {
@@ -273,17 +287,17 @@ export class DashboardController {
           action_type: 'navigation',
           target: '/dashboard/overdue',
           badge_count: overdueCount,
-          enabled: true
+          enabled: true,
         },
         {
           action_id: 'member_alerts',
           label: 'Member Alerts',
           description: 'Review members requiring attention',
           icon: 'user-alert',
-          action_type: 'navigation', 
+          action_type: 'navigation',
           target: '/dashboard/members/alerts',
           badge_count: atRiskMembers,
-          enabled: true
+          enabled: true,
         },
         {
           action_id: 'generate_report',
@@ -292,7 +306,7 @@ export class DashboardController {
           icon: 'file-text',
           action_type: 'modal',
           target: 'report-generator',
-          enabled: true
+          enabled: true,
         },
         {
           action_id: 'add_book',
@@ -301,7 +315,7 @@ export class DashboardController {
           icon: 'plus',
           action_type: 'navigation',
           target: '/books/add',
-          enabled: true
+          enabled: true,
         },
         {
           action_id: 'member_management',
@@ -310,7 +324,7 @@ export class DashboardController {
           icon: 'users',
           action_type: 'navigation',
           target: '/members',
-          enabled: true
+          enabled: true,
         },
         {
           action_id: 'circulation_stats',
@@ -319,8 +333,8 @@ export class DashboardController {
           icon: 'bar-chart',
           action_type: 'navigation',
           target: '/analytics/circulation',
-          enabled: true
-        }
+          enabled: true,
+        },
       ];
 
       res.json({ actions: quickActions });
@@ -336,28 +350,32 @@ export class DashboardController {
   async getPerformanceMetrics(req: Request, res: Response): Promise<void> {
     try {
       const { period = 'monthly', limit = 12 } = req.query;
-      const periodType = (period as string) === 'weekly' ? 'weekly' : 
-                        (period as string) === 'daily' ? 'daily' : 'monthly';
-      
+      const periodType =
+        (period as string) === 'weekly'
+          ? 'weekly'
+          : (period as string) === 'daily'
+            ? 'daily'
+            : 'monthly';
+
       const trends = await overdueAnalyticsService.getOverdueTrends(
-        periodType, 
-        undefined, 
-        undefined, 
+        periodType,
+        undefined,
+        undefined,
         Number(limit)
       );
 
-      const performanceMetrics = trends.map(trend => ({
+      const performanceMetrics = trends.map((trend) => ({
         period: trend.period,
         circulation_count: trend.total_due_books,
         overdue_rate: trend.overdue_rate,
         member_count: trend.unique_overdue_members,
-        performance_score: Math.max(0, 100 - trend.overdue_rate * 2)
+        performance_score: Math.max(0, 100 - trend.overdue_rate * 2),
       }));
 
-      res.json({ 
+      res.json({
         metrics: performanceMetrics.reverse(), // Show chronological order
         period_type: periodType,
-        total_periods: performanceMetrics.length 
+        total_periods: performanceMetrics.length,
       });
     } catch (error) {
       console.error('Error fetching performance metrics:', error);
@@ -373,31 +391,31 @@ export class DashboardController {
       const { reportType } = req.params;
       const { format = 'json', ...filters } = req.query;
 
-      let report;
-      
+      let report: unknown;
+
       switch (reportType) {
         case 'library_summary':
           report = await rentalReportsService.generateLibrarySummaryReport({
             reportFormat: format as any,
-            ...filters
+            ...filters,
           });
           break;
         case 'book_popularity':
           report = await rentalReportsService.generateBookPopularityReport({
             reportFormat: format as any,
-            ...filters
+            ...filters,
           });
           break;
         case 'member_behavior':
           report = await rentalReportsService.generateMemberBehaviorReport({
             reportFormat: format as any,
-            ...filters
+            ...filters,
           });
           break;
         case 'overdue_management':
           report = await rentalReportsService.generateOverdueManagementReport({
             reportFormat: format as any,
-            ...filters
+            ...filters,
           });
           break;
         default:
@@ -406,14 +424,17 @@ export class DashboardController {
       }
 
       // Export in requested format
-      const exportResult = await rentalReportsService.exportReport(report, format as any);
-      
+      const exportResult = await rentalReportsService.exportReport(
+        report,
+        format as any
+      );
+
       if (format === 'json') {
         res.json(report);
       } else {
         res.set({
           'Content-Type': this.getContentType(format as string),
-          'Content-Disposition': `attachment; filename="library_report_${reportType}.${format}"`
+          'Content-Disposition': `attachment; filename="library_report_${reportType}.${format}"`,
         });
         res.send(exportResult.data);
       }
@@ -427,7 +448,7 @@ export class DashboardController {
   private async getSummaryStatsWidget(): Promise<DashboardWidget> {
     const rentalStats = await rentalAnalyticsService.getRentalStatistics();
     const overdueStats = await overdueAnalyticsService.getOverdueSummary();
-    
+
     return {
       widget_id: 'summary_stats',
       widget_type: 'summary_stats',
@@ -436,59 +457,66 @@ export class DashboardController {
         active_loans: rentalStats.active_rentals,
         completed_loans: rentalStats.completed_rentals,
         overdue_books: (overdueStats as any).current_overdue_count || 0,
-        total_transactions: rentalStats.total_transactions
+        total_transactions: rentalStats.total_transactions,
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 300, // 5 minutes
-      priority: 'high'
+      priority: 'high',
     };
   }
 
   private async getPopularBooksWidget(): Promise<DashboardWidget> {
-    const popularBooks = await bookPopularityService.getMostPopularBooks({ limit: 5 });
-    
+    const popularBooks = await bookPopularityService.getMostPopularBooks({
+      limit: 5,
+    });
+
     return {
       widget_id: 'popular_books',
       widget_type: 'popular_books',
       title: 'Most Popular Books',
       data: {
-        books: popularBooks.map(book => ({
+        books: popularBooks.map((book) => ({
           title: book.title,
           author: book.author,
           borrow_count: book.total_borrows,
-          popularity_score: book.popularity_score
-        }))
+          popularity_score: book.popularity_score,
+        })),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 3600, // 1 hour
-      priority: 'medium'
+      priority: 'medium',
     };
   }
 
   private async getMemberActivityWidget(): Promise<DashboardWidget> {
     const segments = await memberBehaviorService.getMemberSegments();
-    
+
     return {
       widget_id: 'member_activity',
       widget_type: 'member_activity',
       title: 'Member Activity',
       data: {
-        segments: segments.map(segment => ({
+        segments: segments.map((segment) => ({
           name: segment.segment_name,
           count: segment.member_count,
-          avg_books: segment.average_books_per_member
-        }))
+          avg_books: segment.average_books_per_member,
+        })),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 1800, // 30 minutes
-      priority: 'medium'
+      priority: 'medium',
     };
   }
 
   private async getOverdueAlertsWidget(): Promise<DashboardWidget> {
-    const overdueTransactions = await overdueAnalyticsService.getCurrentOverdueTransactions({ limit: 10 });
-    const criticalCount = overdueTransactions.filter(t => t.risk_level === 'Critical').length;
-    
+    const overdueTransactions =
+      await overdueAnalyticsService.getCurrentOverdueTransactions({
+        limit: 10,
+      });
+    const criticalCount = overdueTransactions.filter(
+      (t) => t.risk_level === 'Critical'
+    ).length;
+
     return {
       widget_id: 'overdue_alerts',
       widget_type: 'overdue_alerts',
@@ -496,55 +524,60 @@ export class DashboardController {
       data: {
         total_overdue: overdueTransactions.length,
         critical_count: criticalCount,
-        high_risk_count: overdueTransactions.filter(t => t.risk_level === 'High').length,
-        recent_overdue: overdueTransactions.slice(0, 5).map(t => ({
+        high_risk_count: overdueTransactions.filter(
+          (t) => t.risk_level === 'High'
+        ).length,
+        recent_overdue: overdueTransactions.slice(0, 5).map((t) => ({
           member_name: t.member_name,
           book_title: t.book_title,
           days_overdue: t.days_overdue,
-          risk_level: t.risk_level
-        }))
+          risk_level: t.risk_level,
+        })),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 600, // 10 minutes
-      priority: criticalCount > 0 ? 'critical' : 'high'
+      priority: criticalCount > 0 ? 'critical' : 'high',
     };
   }
 
   private async getTrendingGenresWidget(): Promise<DashboardWidget> {
     const genrePopularity = await bookPopularityService.getGenrePopularity();
-    
+
     return {
       widget_id: 'trending_genres',
       widget_type: 'trending_genres',
       title: 'Trending Genres',
       data: {
-        genres: genrePopularity.slice(0, 8).map(genre => ({
+        genres: genrePopularity.slice(0, 8).map((genre) => ({
           genre: genre.genre,
           total_borrows: genre.total_borrows,
-          books_count: genre.total_books
-        }))
+          books_count: genre.total_books,
+        })),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 7200, // 2 hours
-      priority: 'low'
+      priority: 'low',
     };
   }
 
   private async getSystemAlertsWidget(): Promise<DashboardWidget> {
     const alerts = await this.generateSystemAlerts();
-    
+
     return {
       widget_id: 'system_alerts',
       widget_type: 'system_alerts',
       title: 'System Alerts',
       data: {
         alert_count: alerts.length,
-        critical_count: alerts.filter(a => a.alert_type === 'critical').length,
-        alerts: alerts.slice(0, 5)
+        critical_count: alerts.filter((a) => a.alert_type === 'critical')
+          .length,
+        alerts: alerts.slice(0, 5),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 300, // 5 minutes
-      priority: alerts.some(a => a.alert_type === 'critical') ? 'critical' : 'medium'
+      priority: alerts.some((a) => a.alert_type === 'critical')
+        ? 'critical'
+        : 'medium',
     };
   }
 
@@ -557,39 +590,43 @@ export class DashboardController {
       data: {
         recent_borrows: [],
         recent_returns: [],
-        activity_count_today: await this.getBooksActivityToday('borrowed')
+        activity_count_today: await this.getBooksActivityToday('borrowed'),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 300, // 5 minutes
-      priority: 'low'
+      priority: 'low',
     };
   }
 
   private async getMemberSegmentsWidget(): Promise<DashboardWidget> {
     const segments = await memberBehaviorService.getMemberSegments();
-    
+
     return {
       widget_id: 'member_segments',
       widget_type: 'member_segments',
       title: 'Member Segments',
       data: {
-        segments: segments.map(segment => ({
+        segments: segments.map((segment) => ({
           name: segment.segment_name,
           count: segment.member_count,
           description: segment.description,
-          engagement_score: segment.average_engagement_score
-        }))
+          engagement_score: segment.average_engagement_score,
+        })),
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 3600, // 1 hour
-      priority: 'medium'
+      priority: 'medium',
     };
   }
 
   private async getFinancialSummaryWidget(): Promise<DashboardWidget> {
-    const overdueTransactions = await overdueAnalyticsService.getCurrentOverdueTransactions();
-    const totalFees = overdueTransactions.reduce((sum, t) => sum + t.late_fee_amount, 0);
-    
+    const overdueTransactions =
+      await overdueAnalyticsService.getCurrentOverdueTransactions();
+    const totalFees = overdueTransactions.reduce(
+      (sum, t) => sum + t.late_fee_amount,
+      0
+    );
+
     return {
       widget_id: 'financial_summary',
       widget_type: 'financial_summary',
@@ -598,11 +635,11 @@ export class DashboardController {
         total_outstanding_fees: Math.round(totalFees * 100) / 100,
         fee_count: overdueTransactions.length,
         estimated_collection: Math.round(totalFees * 0.75 * 100) / 100, // 75% collection rate
-        monthly_revenue_impact: Math.round(totalFees * 0.75 * 100) / 100
+        monthly_revenue_impact: Math.round(totalFees * 0.75 * 100) / 100,
       },
       last_updated: new Date().toISOString(),
       refresh_interval_seconds: 3600, // 1 hour
-      priority: 'medium'
+      priority: 'medium',
     };
   }
 
@@ -611,7 +648,7 @@ export class DashboardController {
     const alerts: SystemAlert[] = [];
     const overdueStats = await overdueAnalyticsService.getOverdueSummary();
     const overdueCount = (overdueStats as any).current_overdue_count || 0;
-    
+
     if (overdueCount > 50) {
       alerts.push({
         alert_id: 'high_overdue_count',
@@ -622,7 +659,7 @@ export class DashboardController {
         action_required: true,
         action_url: '/dashboard/overdue',
         action_label: 'Review Overdue Books',
-        dismissible: false
+        dismissible: false,
       });
     } else if (overdueCount > 20) {
       alerts.push({
@@ -635,14 +672,16 @@ export class DashboardController {
         action_url: '/dashboard/overdue',
         action_label: 'Review Overdue Books',
         dismissible: true,
-        auto_dismiss_hours: 24
+        auto_dismiss_hours: 24,
       });
     }
 
     // Add more system alerts based on various conditions
     const memberSegments = await memberBehaviorService.getMemberSegments();
-    const atRiskSegment = memberSegments.find(s => s.segment_name === 'At-Risk Members');
-    
+    const atRiskSegment = memberSegments.find(
+      (s) => s.segment_name === 'At-Risk Members'
+    );
+
     if (atRiskSegment && atRiskSegment.member_count > 10) {
       alerts.push({
         alert_id: 'at_risk_members',
@@ -654,7 +693,7 @@ export class DashboardController {
         action_url: '/dashboard/members/segments',
         action_label: 'View Member Segments',
         dismissible: true,
-        auto_dismiss_hours: 48
+        auto_dismiss_hours: 48,
       });
     }
 
@@ -666,7 +705,7 @@ export class DashboardController {
     const activityScore = Math.min(100, rentalStats.total_transactions / 10);
     const overdueScore = Math.max(0, 100 - overdueRate * 2);
     const memberScore = Math.min(100, rentalStats.unique_borrowers * 2);
-    
+
     return Math.round((overdueScore + activityScore + memberScore) / 3);
   }
 
@@ -680,7 +719,9 @@ export class DashboardController {
     return 500; // Mock data
   }
 
-  private async getBooksActivityToday(type: 'borrowed' | 'returned'): Promise<number> {
+  private async getBooksActivityToday(
+    type: 'borrowed' | 'returned'
+  ): Promise<number> {
     // Would implement actual database query for today's activity
     return type === 'borrowed' ? 15 : 12; // Mock data
   }
@@ -711,10 +752,14 @@ export class DashboardController {
 
   private getContentType(format: string): string {
     switch (format) {
-      case 'csv': return 'text/csv';
-      case 'pdf': return 'application/pdf';
-      case 'excel': return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      default: return 'application/json';
+      case 'csv':
+        return 'text/csv';
+      case 'pdf':
+        return 'application/pdf';
+      case 'excel':
+        return 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      default:
+        return 'application/json';
     }
   }
 }
