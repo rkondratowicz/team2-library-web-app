@@ -443,7 +443,7 @@ export class MemberBehaviorService {
     `;
 
     const whereConditions: string[] = [];
-    const params: any[] = [];
+    const params: (string | number)[] = [];
 
     if (filters) {
       if (filters.status) {
@@ -459,7 +459,7 @@ export class MemberBehaviorService {
 
     let finalQuery = query;
     if (whereConditions.length > 0) {
-      finalQuery += ' AND ' + whereConditions.join(' AND ');
+      finalQuery += ` AND ${whereConditions.join(' AND ')}`;
     }
 
     finalQuery +=
@@ -478,7 +478,7 @@ export class MemberBehaviorService {
     }
 
     if (havingConditions.length > 0) {
-      finalQuery += ' HAVING ' + havingConditions.join(' AND ');
+      finalQuery += ` HAVING ${havingConditions.join(' AND ')}`;
     }
 
     // Sorting

@@ -1,5 +1,4 @@
 import { databaseConnection } from '../../data-access/DatabaseConnection.js';
-import { rentalHistoryRepository } from '../../data-access/repositories/RentalHistoryRepository.js';
 import { bookPopularityService } from './BookPopularityService.js';
 import { memberBehaviorService } from './MemberBehaviorService.js';
 import { overdueAnalyticsService } from './OverdueAnalyticsService.js';
@@ -285,7 +284,7 @@ export class RentalReportsService {
       rentalStats,
       overdueStats,
       popularBooks,
-      memberSegments,
+      _memberSegments,
       mostEngagedMembers,
     ] = await Promise.all([
       rentalAnalyticsService.getRentalStatistics(),
@@ -570,7 +569,7 @@ export class RentalReportsService {
 
     const [
       overdueTransactions,
-      overduePatterns,
+      _overduePatterns,
       repeatOffenders,
       overdueTrends,
       summaryStats,
@@ -980,7 +979,7 @@ export class RentalReportsService {
     return actions;
   }
 
-  private generatePolicySuggestions(trends: any[], stats: any): string[] {
+  private generatePolicySuggestions(_trends: any[], stats: any): string[] {
     const suggestions = [];
 
     if (stats.overdue_rate > 15) {
