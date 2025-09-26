@@ -247,11 +247,15 @@ export class TransactionService {
   }
 
   // Search active transactions
-  async searchActiveTransactions(searchTerm: string): Promise<BorrowingTransactionWithDetails[]> {
+  async searchActiveTransactions(
+    searchTerm: string
+  ): Promise<BorrowingTransactionWithDetails[]> {
     if (!searchTerm || searchTerm.trim() === '') {
       return await this.getAllActiveTransactions();
     }
-    return await transactionRepository.searchActiveTransactions(searchTerm.trim());
+    return await transactionRepository.searchActiveTransactions(
+      searchTerm.trim()
+    );
   }
 }
 

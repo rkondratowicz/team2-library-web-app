@@ -233,7 +233,8 @@ export class TransactionRepository {
     const summary = await this.db.getOne(summaryQuery, [memberId]);
     if (!summary) return null;
 
-    const activeTransactions = await this.getActiveBorrowingsByMemberWithDetails(memberId);
+    const activeTransactions =
+      await this.getActiveBorrowingsByMemberWithDetails(memberId);
 
     return {
       ...summary,
@@ -287,7 +288,9 @@ export class TransactionRepository {
   }
 
   // Search active transactions with details
-  async searchActiveTransactions(searchTerm: string): Promise<BorrowingTransactionWithDetails[]> {
+  async searchActiveTransactions(
+    searchTerm: string
+  ): Promise<BorrowingTransactionWithDetails[]> {
     const query = `
             SELECT 
                 bt.*,
@@ -329,7 +332,7 @@ export class TransactionRepository {
       searchPattern, // book title
       searchPattern, // book author
       searchPattern, // copy number
-      searchPattern  // transaction id
+      searchPattern, // transaction id
     ]);
 
     return results as BorrowingTransactionWithDetails[];

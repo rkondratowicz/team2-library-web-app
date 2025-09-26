@@ -300,7 +300,9 @@ export class TransactionController {
   async searchActiveTransactions(req: Request, res: Response): Promise<void> {
     try {
       const searchTerm = req.query.q as string;
-      const transactions = await transactionService.searchActiveTransactions(searchTerm || '');
+      const transactions = await transactionService.searchActiveTransactions(
+        searchTerm || ''
+      );
       res.json(transactions);
     } catch (error) {
       console.error('Error searching active transactions:', error);
