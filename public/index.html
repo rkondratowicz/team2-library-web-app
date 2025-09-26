@@ -82,9 +82,16 @@
                                     <div class="form-text">Max year: 2025</div>
                                 </div>
                             </div>
-                            <div class="mb-3">
-                                <label for="book-description" class="form-label">Description</label>
-                                <textarea class="form-control" id="book-description" rows="3"></textarea>
+                            <div class="row">
+                                <div class="col-md-8 mb-3">
+                                    <label for="book-description" class="form-label">Description</label>
+                                    <textarea class="form-control" id="book-description" rows="3"></textarea>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="book-copies" class="form-label">Number of Copies *</label>
+                                    <input type="number" class="form-control" id="book-copies" min="1" max="100" value="1" required>
+                                    <div class="form-text">How many copies are available (1-100)</div>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-primary">Add Book</button>
                         </form>
@@ -507,6 +514,8 @@
                 
                 // Reset form
                 document.getElementById('add-book-form').reset();
+                // Ensure copies field returns to default value
+                document.getElementById('book-copies').value = 1;
                 
                 // Reload books to show the new one
                 loadBooks();
@@ -573,10 +582,17 @@
                 const author = document.getElementById('book-author').value.trim();
                 const isbn = document.getElementById('book-isbn').value.trim();
                 const year = document.getElementById('book-year').value;
+                const copies = document.getElementById('book-copies').value;
                 
                 // Client-side validation
                 if (!title || !author) {
                     document.getElementById('form-error').textContent = 'Title and Author are required';
+                    document.getElementById('form-error').classList.remove('d-none');
+                    return;
+                }
+
+                if (!copies || parseInt(copies) < 1 || parseInt(copies) > 100) {
+                    document.getElementById('form-error').textContent = 'Number of copies must be between 1 and 100';
                     document.getElementById('form-error').classList.remove('d-none');
                     return;
                 }
@@ -609,7 +625,8 @@
                     isbn: isbn || undefined,
                     genre: genre || undefined,
                     publication_year: year ? parseInt(year) : undefined,
-                    description: document.getElementById('book-description').value.trim() || undefined
+                    description: document.getElementById('book-description').value.trim() || undefined,
+                    copies_available: parseInt(copies)
                 };
                 
                 addBook(formData);
