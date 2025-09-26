@@ -285,6 +285,55 @@ export class TransactionRepository {
     const activeTransactions = await this.getActiveBorrowingsByMember(memberId);
     return activeTransactions.length;
   }
+
+  // Search active transactions with details
+  async searchActiveTransactions(searchTerm: string): Promise<BorrowingTransactionWithDetails[]> {
+    const query = `
+            SELECT 
+                bt.*,
+                b.title as book_title,
+                b.author as book_author,
+                b.isbn as book_isbn,
+                bc.copy_number,
+                (m.first_name || ' ' || m.last_name) as member_name,
+                m.email as member_email,
+                julianday('now') - julianday(bt.borrow_date) as days_borrowed,
+                CASE 
+                    WHEN date(bt.due_date) < date('now') THEN 1 
+                    ELSE 0 
+                END as is_overdue,
+                CASE 
+                    WHEN date(bt.due_date) < date('now') 
+                    THEN julianday('now') - julianday(bt.due_date)
+                    ELSE NULL 
+                END as days_overdue
+            FROM borrowing_transactions bt
+            JOIN book_copies bc ON bt.book_copy_id = bc.id
+            JOIN books b ON bc.book_id = b.id
+            JOIN members m ON bt.member_id = m.member_id
+            WHERE bt.status = 'Active' AND (
+                LOWER(m.first_name || ' ' || m.last_name) LIKE LOWER(?) OR
+                LOWER(m.member_id) LIKE LOWER(?) OR
+                LOWER(b.title) LIKE LOWER(?) OR
+                LOWER(b.author) LIKE LOWER(?) OR
+                LOWER(bc.copy_number) LIKE LOWER(?) OR
+                LOWER(bt.id) LIKE LOWER(?)
+            )
+            ORDER BY bt.borrow_date DESC
+        `;
+
+    const searchPattern = `%${searchTerm}%`;
+    const results = await this.db.all(query, [
+      searchPattern, // member name
+      searchPattern, // member id
+      searchPattern, // book title
+      searchPattern, // book author
+      searchPattern, // copy number
+      searchPattern  // transaction id
+    ]);
+
+    return results as BorrowingTransactionWithDetails[];
+  }
 }
 
 // Export singleton instance

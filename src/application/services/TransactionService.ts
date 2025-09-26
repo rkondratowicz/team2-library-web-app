@@ -245,6 +245,14 @@ export class TransactionService {
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
   }
+
+  // Search active transactions
+  async searchActiveTransactions(searchTerm: string): Promise<BorrowingTransactionWithDetails[]> {
+    if (!searchTerm || searchTerm.trim() === '') {
+      return await this.getAllActiveTransactions();
+    }
+    return await transactionRepository.searchActiveTransactions(searchTerm.trim());
+  }
 }
 
 export const transactionService = new TransactionService();
