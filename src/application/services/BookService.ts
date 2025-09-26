@@ -1,5 +1,6 @@
 import { bookRepository } from '../../data-access/repositories/BookRepository.js';
 import type { Book } from '../models/Book.js';
+import type { CreateCopyRequest } from '../models/BookCopy.js';
 
 export class BookService {
   async getAllBooks(): Promise<Book[]> {
@@ -59,7 +60,33 @@ export class BookService {
       }
     }
 
-    return await bookRepository.createBook(bookData);
+    // Copies validation
+    const copiesToCreate = bookData.copies_available || 1;
+    if (copiesToCreate < 1 || copiesToCreate > 100) {
+      throw new Error('Number of copies must be between 1 and 100');
+    }
+
+    // Create the book first
+    const newBook = await bookRepository.createBook(bookData);
+
+    // Now create individual copies for this book
+    for (let i = 1; i <= copiesToCreate; i++) {
+      const copyData: CreateCopyRequest = {
+        book_id: newBook.id,
+        copy_number: i.toString().padStart(3, '0'), // e.g., "001", "002", etc.
+        status: 'Available',
+        acquisition_date: new Date().toISOString().split('T')[0]
+      };
+      
+      try {
+        await bookRepository.createCopy(copyData);
+      } catch (error) {
+        console.error(`Failed to create copy ${i} for book ${newBook.id}:`, error);
+        // Continue creating other copies even if one fails
+      }
+    }
+
+    return newBook;
   }
 
   async updateBook(
