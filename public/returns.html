@@ -226,7 +226,7 @@
                 const isOverdue = dueDate < new Date();
                 
                 row.innerHTML = `
-                    <td><span class="transaction-id">${transaction.transaction_id}</span></td>
+                    <td><span class="transaction-id">${transaction.id}</span></td>
                     <td>
                         <div>
                             <strong>${escapeHtml(transaction.member_name)}</strong>
@@ -249,7 +249,7 @@
                         <span class="badge bg-${isOverdue ? 'danger' : 'success'}">${transaction.status}</span>
                     </td>
                     <td>
-                        <button class="btn btn-outline-primary btn-sm" onclick="initiateReturn('${transaction.transaction_id}')">
+                        <button class="btn btn-outline-primary btn-sm" onclick="initiateReturn('${transaction.id}')">
                             ↩️ Return
                         </button>
                     </td>
@@ -289,7 +289,7 @@
         }
         
         function initiateReturn(transactionId) {
-            const transaction = transactionsCache.find(t => t.transaction_id === transactionId);
+            const transaction = transactionsCache.find(t => t.id === transactionId);
             if (!transaction) {
                 alert('Transaction not found');
                 return;
