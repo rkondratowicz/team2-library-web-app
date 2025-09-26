@@ -6,6 +6,7 @@ import { bookController } from './src/presentation/controllers/BookController.js
 import { memberController } from './src/presentation/controllers/MemberController.js';
 import { rentalController } from './src/presentation/controllers/RentalController.js';
 import { transactionController } from './src/presentation/controllers/TransactionController.js';
+import { dashboardController } from './src/presentation/controllers/DashboardController.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -173,6 +174,36 @@ app.get(
   rentalController.getOverdueRentals.bind(rentalController)
 );
 
+// Dashboard API routes
+app.get(
+  '/api/dashboard/overview',
+  dashboardController.getDashboardOverview.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/widgets',
+  dashboardController.getDashboardWidgets.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/widgets/:widgetId',
+  dashboardController.getDashboardWidget.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/alerts',
+  dashboardController.getSystemAlerts.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/actions',
+  dashboardController.getQuickActions.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/metrics',
+  dashboardController.getPerformanceMetrics.bind(dashboardController)
+);
+app.get(
+  '/api/dashboard/reports/:reportType',
+  dashboardController.generateDashboardReport.bind(dashboardController)
+);
+
 // Initialize database and start server
 async function startServer() {
   try {
@@ -191,6 +222,9 @@ async function startServer() {
       );
       console.log(
         `Rentals API available at http://localhost:${PORT}/api/rentals`
+      );
+      console.log(
+        `Dashboard API available at http://localhost:${PORT}/api/dashboard`
       );
     });
   } catch (error) {
